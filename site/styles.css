@@ -466,7 +466,7 @@ body {
     font-weight: bold;
     color: #1877f2;
     font-size: 1rem;
-    background: #fee2e2;
+    background: transparent;
     padding: 4px 8px;
     border-radius: 8px;
     display: inline-block;
