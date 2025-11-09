@@ -1,0 +1,24 @@
+{
+  "name": "phone-flipping-dashboard",
+  "version": "1.0.0",
+  "description": "Real-time dashboard for phone flipping CSV monitoring",
+  "main": "index.js",
+  "scripts": {
+    "start": "python3 -m http.server 3001",
+    "dev": "python3 -m http.server 3001"
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "vercel": "^48.9.0"
+  },
+  "keywords": [
+    "phone",
+    "flipping",
+    "dashboard",
+    "firebase",
+    "react"
+  ],
+  "author": "Phone Flipping App",
+  "license": "MIT"
+}
