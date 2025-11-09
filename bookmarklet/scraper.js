@@ -41,13 +41,13 @@ function scrapeAndRefresh() {
   // Scrape current page
   scrapePage();
 
-  // Wait 5 seconds then refresh
+  // Wait 3 seconds then refresh (gives time for download to complete)
   setTimeout(() => {
     if (isScraping) {
       console.log("🔄 Refreshing page for next scrape cycle...");
       location.reload();
     }
-  }, 5000);
+  }, 3000);
 }
 
 function scrapePage() {
@@ -115,24 +115,33 @@ function scrapePage() {
           return cell;
         }).join(","));
 
+        // Direct download in content script
         let blob = new Blob([csv], { type: "text/csv" });
         let url = URL.createObjectURL(blob);
+        let a = document.createElement('a');
+        a.href = url;
+        a.download = `scrape_${scrapeCount + 1}_${count}_listings.csv`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
 
-        // Send blob to background script for download
-        chrome.runtime.sendMessage({
-          action: 'downloadCSV',
-          blob: Array.from(new Uint8Array(blob)),
-          filename: `scrape_${scrapeCount + 1}_${count}_listings.csv`
-        });
-
-        console.log(`✅ Scraped ${count} listings`);
+        console.log(`✅ Downloaded CSV with ${count} listings`);
       } else {
         console.log("❌ No listings found");
       }
 
       scrapeCount++;
-    }, 1000);
-  }, 1000);
+
+      // Start refresh timer immediately after download
+      setTimeout(() => {
+        if (isScraping) {
+          console.log("🔄 Refreshing page for next scrape cycle...");
+          location.reload();
+        }
+      }, 2000); // 2 seconds after download
+    }, 500);
+  }, 500);
 }
 
 // Auto-start if URL contains scrape parameter
