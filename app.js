@@ -257,7 +257,7 @@ const Dashboard = () => {
         });
 
         return filtered;
-    }, [phoneListings, selectedModel, selectedGeneration, priceRange, sortBy, sortOrder, searchTerm, showHidden, showFavorites, safeParseDate]);
+    }, [phoneListings, selectedModel, selectedGeneration, priceRange, sortBy, sortOrder, searchTerm, showHidden, showFavorites, safeParseDate, getRelativeTime]);
 
     // Helper function to safely parse date
     const safeParseDate = useCallback((dateString) => {
@@ -276,6 +276,30 @@ const Dashboard = () => {
             return new Date(0);
         }
     }, []);
+
+    // Helper function to get relative time
+    const getRelativeTime = useCallback((dateString) => {
+        const date = safeParseDate(dateString);
+        if (date.getTime() === 0) {
+            return 'No date';
+        }
+
+        const now = new Date();
+        const diffMs = now - date;
+        const diffMinutes = Math.floor(diffMs / (1000 * 60));
+        const diffHours = Math.floor(diffMinutes / 60);
+        const diffDays = Math.floor(diffHours / 24);
+
+        if (diffMinutes < 1) {
+            return 'Just now';
+        } else if (diffMinutes < 60) {
+            return `${diffMinutes}m`;
+        } else if (diffHours < 24) {
+            return `${diffHours}h`;
+        } else {
+            return `${diffDays}d`;
+        }
+    }, [safeParseDate]);
 
     // Function to remove duplicates and keep oldest entry
     const removeDuplicatesKeepOldest = useCallback((listings) => {
@@ -409,7 +433,7 @@ const Dashboard = () => {
     return (
         <div className="dashboard">
             <header className="dashboard-header">
-                <h1>📱 Phone Flipping Dashboard</h1>
+                <h1>📱 Dashboard</h1>
             </header>
 
             {error && (
@@ -421,8 +445,7 @@ const Dashboard = () => {
 
             
             <section className="filters-section">
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
-                    <h2>Dashboard</h2>
+                <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginBottom: '15px' }}>
                     <button
                         id="clear-database-btn"
                         onClick={clearDatabaseAndPushToGitHub}
@@ -440,7 +463,7 @@ const Dashboard = () => {
                         onMouseOver={(e) => e.target.style.transform = 'translateY(-1px)'}
                         onMouseOut={(e) => e.target.style.transform = 'translateY(0)'}
                     >
-                        Clear
+                        🔄
                     </button>
                 </div>
 
@@ -641,7 +664,6 @@ const Dashboard = () => {
               </section>
 
             <section className="listings-section">
-                <h2>📱 Phone Listings ({filteredListings.length})</h2>
                 {filteredListings.length === 0 ? (
                     <div className="empty-state">
                         <h3>No phone listings found</h3>
@@ -654,7 +676,7 @@ const Dashboard = () => {
                                 <tr>
                                     <th
                                         onClick={() => toggleSort('model')}
-                                        style={{ cursor: 'pointer', userSelect: 'none' }}
+                                        style={{ cursor: 'pointer', userSelect: 'none', display: 'none' }}
                                         title="Click to sort by model"
                                     >
                                         Model
@@ -713,13 +735,12 @@ const Dashboard = () => {
                                         )}
                                     </th>
                                     <th style={{ cursor: 'default' }}>Actions</th>
-                                    <th style={{ cursor: 'default' }}>Link</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {filteredListings.map(listing => (
                                     <tr key={listing.id}>
-                                        <td className="model-cell" style={{ width: '180px', maxWidth: '180px' }}>
+                                        <td className="model-cell" style={{ width: '180px', maxWidth: '180px', display: 'none' }}>
                                             <div style={{
                                                 color: '#333',
                                                 fontSize: '0.85rem',
@@ -732,7 +753,27 @@ const Dashboard = () => {
                                             </div>
                                         </td>
                                         <td className="title-cell">
-                                            <div className="title-text">{listing.title}</div>
+                                            {listing.link ? (
+                                                <a
+                                                    href={listing.link}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="title-link"
+                                                    style={{
+                                                        color: '#1877f2',
+                                                        textDecoration: 'none',
+                                                        cursor: 'pointer',
+                                                        display: 'block',
+                                                        lineHeight: '1.4'
+                                                    }}
+                                                    onMouseOver={(e) => e.target.style.textDecoration = 'underline'}
+                                                    onMouseOut={(e) => e.target.style.textDecoration = 'none'}
+                                                >
+                                                    {listing.title}
+                                                </a>
+                                            ) : (
+                                                <div className="title-text">{listing.title}</div>
+                                            )}
                                         </td>
                                         <td className="price-cell">
                                             <span className="price-value">${listing.price}</span>
@@ -741,22 +782,7 @@ const Dashboard = () => {
                                             {listing.location}
                                         </td>
                                                                                 <td className="detected-cell">
-                                            {(() => {
-                                                const date = safeParseDate(listing.found_at);
-                                                if (date.getTime() === 0) {
-                                                    return 'No date';
-                                                }
-
-                                                const month = (date.getMonth() + 1).toString().padStart(2, '0');
-                                                const day = date.getDate().toString().padStart(2, '0');
-                                                let hours = date.getHours();
-                                                const minutes = date.getMinutes().toString().padStart(2, '0');
-                                                const ampm = hours >= 12 ? 'PM' : 'AM';
-                                                hours = hours % 12;
-                                                hours = hours ? hours : 12; // 0 should be 12
-
-                                                return `${month}/${day} ${hours}:${minutes} ${ampm}`;
-                                            })()}
+                                            {getRelativeTime(listing.found_at)}
                                         </td>
                                         <td className="actions-cell" style={{ textAlign: 'center', minWidth: '100px' }}>
                                             <button
@@ -793,18 +819,6 @@ const Dashboard = () => {
                                             >
                                                 {showHidden ? (listing.hidden ? '👁️' : '👁️‍🗨️') : '👁️‍🗨️'}
                                             </button>
-                                        </td>
-                                        <td className="link-cell">
-                                            {listing.link && (
-                                                <a
-                                                    href={listing.link}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className="view-link"
-                                                >
-                                                    View →
-                                                </a>
-                                            )}
                                         </td>
                                     </tr>
                                 ))}
