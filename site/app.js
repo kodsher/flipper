@@ -1,6 +1,18 @@
 // Phone Flipping Dashboard React App - Enhanced for Individual Listings with Table View
 const { useState, useEffect, useCallback } = React;
 
+// Function to truncate text every 15 characters with proper line breaks
+const truncateText = (text, maxChars = 15) => {
+    if (!text) return '';
+
+    let result = '';
+    for (let i = 0; i < text.length; i += maxChars) {
+        if (i > 0) result += '\n';
+        result += text.substring(i, i + maxChars);
+    }
+    return result;
+};
+
 // Main Dashboard Component
 const Dashboard = () => {
     const [phoneListings, setPhoneListings] = useState([]);
@@ -760,7 +772,7 @@ const Dashboard = () => {
                                                 {listing.model || 'Unknown'}
                                             </div>
                                         </td>
-                                        <td className="title-cell">
+                                        <td className="title-cell" style={{ width: '160px', maxWidth: '160px' }}>
                                             {listing.link ? (
                                                 <a
                                                     href={listing.link}
@@ -772,15 +784,31 @@ const Dashboard = () => {
                                                         textDecoration: 'none',
                                                         cursor: 'pointer',
                                                         display: 'block',
-                                                        lineHeight: '1.4'
+                                                        whiteSpace: 'pre-wrap',
+                                                        wordBreak: 'break-word',
+                                                        WebkitBoxOrient: 'vertical',
+                                                        WebkitLineClamp: 'unset',
+                                                        overflow: 'visible',
+                                                        lineHeight: '1.4',
+                                                        fontSize: '0.85rem'
                                                     }}
                                                     onMouseOver={(e) => e.target.style.textDecoration = 'underline'}
                                                     onMouseOut={(e) => e.target.style.textDecoration = 'none'}
                                                 >
-                                                    {listing.title}
+                                                    {truncateText(listing.title)}
                                                 </a>
                                             ) : (
-                                                <div className="title-text">{listing.title}</div>
+                                                <div className="title-text" style={{
+                                                    whiteSpace: 'pre-wrap',
+                                                    wordBreak: 'break-word',
+                                                    WebkitBoxOrient: 'vertical',
+                                                    WebkitLineClamp: 'unset',
+                                                    overflow: 'visible',
+                                                    lineHeight: '1.4',
+                                                    fontSize: '0.85rem'
+                                                }}>
+                                                    {truncateText(listing.title)}
+                                                </div>
                                             )}
                                         </td>
                                         <td className="price-cell">
