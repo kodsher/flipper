@@ -23,8 +23,8 @@ const Dashboard = () => {
     const [duplicateInfo, setDuplicateInfo] = useState({ total: 0, duplicates: 0, unique: 0 });
 
     // Filtering states
-    const [selectedModel, setSelectedModel] = useState('all');
-    const [selectedGeneration, setSelectedGeneration] = useState('all');
+    const [selectedModels, setSelectedModels] = useState(['all']);
+    const [selectedGenerations, setSelectedGenerations] = useState(['all']);
     const [priceRange, setPriceRange] = useState({ min: 0, max: 10000 });
     const [sortBy, setSortBy] = useState('price');
     const [sortOrder, setSortOrder] = useState('asc');
@@ -80,6 +80,75 @@ const Dashboard = () => {
         const models = new Set(phoneListings.map(l => l.model || 'Unknown'));
         return Array.from(models).sort();
     }, [phoneListings]);
+
+    // Function to get count for each model
+    const getModelCounts = useCallback(() => {
+        const counts = { all: phoneListings.length, iphone: 0, other: 0 };
+        phoneListings.forEach(listing => {
+            const model = listing.model || 'Unknown';
+            if (model.toLowerCase().includes('iphone')) {
+                counts.iphone++;
+            } else {
+                counts.other++;
+            }
+            counts[model] = (counts[model] || 0) + 1;
+        });
+        return counts;
+    }, [phoneListings]);
+
+    // Function to get count for each generation
+    const getGenerationCounts = useCallback(() => {
+        const counts = { all: 0, '17': 0, '16': 0, '15': 0, '14': 0, '13': 0, older: 0 };
+        phoneListings.forEach(listing => {
+            const model = listing.model || '';
+            if (model.toLowerCase().includes('iphone')) {
+                counts.all++;
+                if (model.includes('17')) counts['17']++;
+                else if (model.includes('16')) counts['16']++;
+                else if (model.includes('15')) counts['15']++;
+                else if (model.includes('14')) counts['14']++;
+                else if (model.includes('13')) counts['13']++;
+                else counts.older++;
+            }
+        });
+        return counts;
+    }, [phoneListings]);
+
+    // Function to toggle model selection
+    const toggleModel = useCallback((model) => {
+        setSelectedModels(prev => {
+            if (model === 'all') {
+                return ['all'];
+            }
+            let newSelection = prev.includes(model)
+                ? prev.filter(m => m !== model)
+                : [...prev.filter(m => m !== 'all'), model];
+
+            // If no models selected, default to 'all'
+            if (newSelection.length === 0) {
+                return ['all'];
+            }
+            return newSelection;
+        });
+    }, []);
+
+    // Function to toggle generation selection
+    const toggleGeneration = useCallback((generation) => {
+        setSelectedGenerations(prev => {
+            if (generation === 'all') {
+                return ['all'];
+            }
+            let newSelection = prev.includes(generation)
+                ? prev.filter(g => g !== generation)
+                : [...prev.filter(g => g !== 'all'), generation];
+
+            // If no generations selected, default to 'all'
+            if (newSelection.length === 0) {
+                return ['all'];
+            }
+            return newSelection;
+        });
+    }, []);
 
     // Function to toggle hide/unhide an item
     const toggleHideItem = async (listingId, currentlyHidden) => {
@@ -179,31 +248,44 @@ const Dashboard = () => {
     const getFilteredListings = useCallback(() => {
         let filtered = phoneListings;
 
-        // Filter by model and generation
-        if (selectedModel !== 'all') {
-            if (selectedModel === 'iphone') {
-                if (selectedGeneration !== 'all') {
-                    filtered = filtered.filter(listing => {
-                        const model = listing.model || '';
-                        return model.includes('iPhone') &&
-                               (selectedGeneration === 'older' ?
-                                   !model.includes('iPhone 13') && !model.includes('iPhone 14') &&
-                                   !model.includes('iPhone 15') && !model.includes('iPhone 16') && !model.includes('iPhone 17') :
-                                   model.includes(selectedGeneration));
-                    });
-                } else {
-                    filtered = filtered.filter(listing =>
-                        (listing.model || '').includes('iPhone')
-                    );
-                }
-            } else if (selectedModel === 'other') {
-                filtered = filtered.filter(listing => {
-                    const model = listing.model || '';
-                    return !model.includes('iPhone');
+        // Filter by models (multiple selection)
+        if (!selectedModels.includes('all')) {
+            filtered = filtered.filter(listing => {
+                const model = listing.model || '';
+
+                // Check if this listing matches any selected model
+                return selectedModels.some(selectedModel => {
+                    if (selectedModel === 'iphone') {
+                        return model.toLowerCase().includes('iphone');
+                    } else if (selectedModel === 'other') {
+                        return !model.toLowerCase().includes('iphone');
+                    } else {
+                        return model === selectedModel;
+                    }
                 });
-            } else {
-                filtered = filtered.filter(listing => listing.model === selectedModel);
-            }
+            });
+        }
+
+        // Filter by generations (multiple selection) - only applies to iPhones
+        if (!selectedGenerations.includes('all')) {
+            filtered = filtered.filter(listing => {
+                const model = listing.model || '';
+
+                // Only filter by generation if it's an iPhone
+                if (!model.toLowerCase().includes('iphone')) {
+                    return true; // Non-iPhones pass through generation filter
+                }
+
+                // Check if this iPhone matches any selected generation
+                return selectedGenerations.some(selectedGeneration => {
+                    if (selectedGeneration === 'older') {
+                        return !model.includes('iPhone 13') && !model.includes('iPhone 14') &&
+                               !model.includes('iPhone 15') && !model.includes('iPhone 16') && !model.includes('iPhone 17');
+                    } else {
+                        return model.includes(selectedGeneration);
+                    }
+                });
+            });
         }
 
         // Filter by price range
@@ -269,7 +351,7 @@ const Dashboard = () => {
         });
 
         return filtered;
-    }, [phoneListings, selectedModel, selectedGeneration, priceRange, sortBy, sortOrder, searchTerm, showHidden, showFavorites, safeParseDate, getRelativeTime]);
+    }, [phoneListings, selectedModels, selectedGenerations, priceRange, sortBy, sortOrder, searchTerm, showHidden, showFavorites, safeParseDate, getRelativeTime]);
 
     // Helper function to safely parse date
     const safeParseDate = useCallback((dateString) => {
@@ -431,6 +513,8 @@ const Dashboard = () => {
     const stats = calculateStats();
     const filteredListings = getFilteredListings();
     const uniqueModels = getUniqueModels();
+    const modelCounts = getModelCounts();
+    const generationCounts = getGenerationCounts();
 
     if (loading) {
         return (
@@ -490,11 +574,11 @@ const Dashboard = () => {
                 {/* Phone Model Tags */}
                 <div className="model-tags" style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '12px' }}>
                     <button
-                        className={`model-tag ${selectedModel === 'all' ? 'active' : ''}`}
-                        onClick={() => setSelectedModel('all')}
+                        className={`model-tag ${selectedModels.includes('all') ? 'active' : ''}`}
+                        onClick={() => toggleModel('all')}
                         style={{
-                            background: selectedModel === 'all' ? '#1877f2' : '#f8f9fa',
-                            color: selectedModel === 'all' ? 'white' : '#333',
+                            background: selectedModels.includes('all') ? '#1877f2' : '#f8f9fa',
+                            color: selectedModels.includes('all') ? 'white' : '#333',
                             border: '2px solid #e1e1e1',
                             padding: '8px 16px',
                             borderRadius: '20px',
@@ -503,14 +587,14 @@ const Dashboard = () => {
                             transition: 'all 0.3s ease'
                         }}
                     >
-                        All Models ({uniqueModels.length})
+                        All Models ({modelCounts.all})
                     </button>
                     <button
-                        className={`model-tag ${selectedModel === 'iphone' ? 'active' : ''}`}
-                        onClick={() => { setSelectedModel('iphone'); setSelectedGeneration('all'); }}
+                        className={`model-tag ${selectedModels.includes('iphone') ? 'active' : ''}`}
+                        onClick={() => toggleModel('iphone')}
                         style={{
-                            background: selectedModel === 'iphone' ? '#1877f2' : '#f8f9fa',
-                            color: selectedModel === 'iphone' ? 'white' : '#333',
+                            background: selectedModels.includes('iphone') ? '#1877f2' : '#f8f9fa',
+                            color: selectedModels.includes('iphone') ? 'white' : '#333',
                             border: '2px solid #e1e1e1',
                             padding: '8px 16px',
                             borderRadius: '20px',
@@ -519,14 +603,14 @@ const Dashboard = () => {
                             transition: 'all 0.3s ease'
                         }}
                     >
-                        iPhone
+                        iPhone ({modelCounts.iphone})
                     </button>
                     <button
-                        className={`model-tag ${selectedModel === 'other' ? 'active' : ''}`}
-                        onClick={() => { setSelectedModel('other'); setSelectedGeneration('all'); }}
+                        className={`model-tag ${selectedModels.includes('other') ? 'active' : ''}`}
+                        onClick={() => toggleModel('other')}
                         style={{
-                            background: selectedModel === 'other' ? '#1877f2' : '#f8f9fa',
-                            color: selectedModel === 'other' ? 'white' : '#333',
+                            background: selectedModels.includes('other') ? '#1877f2' : '#f8f9fa',
+                            color: selectedModels.includes('other') ? 'white' : '#333',
                             border: '2px solid #e1e1e1',
                             padding: '8px 16px',
                             borderRadius: '20px',
@@ -535,19 +619,19 @@ const Dashboard = () => {
                             transition: 'all 0.3s ease'
                         }}
                     >
-                        Other
+                        Other ({modelCounts.other})
                     </button>
                 </div>
 
                 {/* iPhone Generation Tags */}
-                {selectedModel === 'iphone' && (
+                {selectedModels.includes('iphone') && (
                     <div className="generation-tags" style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '12px' }}>
                         <button
-                            className={`generation-tag ${selectedGeneration === 'all' ? 'active' : ''}`}
-                            onClick={() => setSelectedGeneration('all')}
+                            className={`generation-tag ${selectedGenerations.includes('all') ? 'active' : ''}`}
+                            onClick={() => toggleGeneration('all')}
                             style={{
-                                background: selectedGeneration === 'all' ? '#1877f2' : '#f8f9fa',
-                                color: selectedGeneration === 'all' ? 'white' : '#333',
+                                background: selectedGenerations.includes('all') ? '#1877f2' : '#f8f9fa',
+                                color: selectedGenerations.includes('all') ? 'white' : '#333',
                                 border: '2px solid #e1e1e1',
                                 padding: '8px 16px',
                                 borderRadius: '20px',
@@ -556,16 +640,16 @@ const Dashboard = () => {
                                 transition: 'all 0.3s ease'
                             }}
                         >
-                            All iPhones
+                            All iPhones ({generationCounts.all})
                         </button>
                         {['17', '16', '15', '14', '13', 'older'].map(gen => (
                             <button
                                 key={gen}
-                                className={`generation-tag ${selectedGeneration === gen ? 'active' : ''}`}
-                                onClick={() => setSelectedGeneration(gen)}
+                                className={`generation-tag ${selectedGenerations.includes(gen) ? 'active' : ''}`}
+                                onClick={() => toggleGeneration(gen)}
                                 style={{
-                                    background: selectedGeneration === gen ? '#1877f2' : '#f8f9fa',
-                                    color: selectedGeneration === gen ? 'white' : '#333',
+                                    background: selectedGenerations.includes(gen) ? '#1877f2' : '#f8f9fa',
+                                    color: selectedGenerations.includes(gen) ? 'white' : '#333',
                                     border: '2px solid #e1e1e1',
                                     padding: '8px 16px',
                                     borderRadius: '20px',
@@ -574,7 +658,7 @@ const Dashboard = () => {
                                     transition: 'all 0.3s ease'
                                 }}
                             >
-                                {gen.charAt(0).toUpperCase() + gen.slice(1)}
+                                {gen.charAt(0).toUpperCase() + gen.slice(1)} ({generationCounts[gen]})
                             </button>
                         ))}
                     </div>
