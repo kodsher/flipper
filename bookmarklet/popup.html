@@ -1,319 +1,74 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Facebook Marketplace Scraper</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #1877f2 0%, #0c5bcc 100%);
-            width: 450px;
-            min-height: 600px;
-            color: #333;
-            margin: 0;
-            padding: 0;
-        }
-
-        .container {
-            background: rgba(255, 255, 255, 0.95);
-            padding: 25px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-            backdrop-filter: blur(10px);
-            min-height: 600px;
-        }
-
-        h1 {
-            color: #1877f2;
-            margin-bottom: 8px;
-            font-size: 1.5rem;
-            text-align: center;
-        }
-
-        .subtitle {
-            color: #666;
-            margin-bottom: 20px;
-            font-size: 0.9rem;
-            text-align: center;
-        }
-
-        .status {
-            background: #f8f9fa;
-            border-radius: 12px;
-            padding: 15px;
-            margin-bottom: 20px;
-            text-align: center;
-            border: 2px solid #e9ecef;
-            transition: all 0.3s ease;
-        }
-
-        .status.scraping {
-            background: #e3f2fd;
-            border-color: #1976d2;
-            color: #1976d2;
-        }
-
-        .status.stopped {
-            background: #f3e5f5;
-            border-color: #7b1fa2;
-            color: #7b1fa2;
-        }
-
-        .status.error {
-            background: #ffebee;
-            border-color: #f44336;
-            color: #c62828;
-        }
-
-        .bookmarklet-section {
-            background: #f8f9fa;
-            border-radius: 15px;
-            padding: 20px;
-            margin-bottom: 20px;
-            border: 2px solid #e9ecef;
-        }
-
-        .bookmarklet-title {
-            font-weight: 600;
-            color: #495057;
-            margin-bottom: 15px;
-            font-size: 1rem;
-        }
-
-        .bookmarklet-btn {
-            width: 100%;
-            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-            color: white;
-            border: none;
-            padding: 15px;
-            border-radius: 25px;
-            font-weight: 600;
-            font-size: 1rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            margin-bottom: 10px;
-            box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
-        }
-
-        .bookmarklet-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
-        }
-
-        .bookmarklet-btn:disabled {
-            background: #6c757d;
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
-        }
-
-        .instructions {
-            background: #e3f2fd;
-            border-radius: 12px;
-            padding: 15px;
-            margin-bottom: 20px;
-            border-left: 4px solid #1877f2;
-            font-size: 0.85rem;
-        }
-
-        .step {
-            margin-bottom: 8px;
-            padding-left: 20px;
-            position: relative;
-            font-size: 0.85rem;
-        }
-
-        .step:before {
-            content: "🔸";
-            position: absolute;
-            left: 0;
-        }
-
-        .auto-scrape-section {
-            background: #fff3cd;
-            border-radius: 15px;
-            padding: 20px;
-            margin-bottom: 20px;
-            border: 2px solid #ffc107;
-        }
-
-        .auto-scrape-title {
-            font-weight: 600;
-            color: #856404;
-            margin-bottom: 15px;
-            font-size: 1rem;
-        }
-
-        .url-input {
-            width: 100%;
-            padding: 10px;
-            border: 2px solid #e1e1e1;
-            border-radius: 8px;
-            font-size: 0.9rem;
-            margin-bottom: 12px;
-            transition: border-color 0.3s ease;
-        }
-
-        .url-input:focus {
-            outline: none;
-            border-color: #ffc107;
-        }
-
-        .open-url-btn {
-            width: 100%;
-            background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%);
-            color: #333;
-            border: none;
-            padding: 12px;
-            border-radius: 20px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-size: 0.9rem;
-        }
-
-        .open-url-btn:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 15px rgba(255, 193, 7, 0.4);
-        }
-
-        .main-controls {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-
-        .main-btn {
-            flex: 1;
-            padding: 15px;
-            border: none;
-            border-radius: 12px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-size: 0.95rem;
-        }
-
-        .start-btn {
-            background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
-            color: white;
-            box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
-        }
-
-        .start-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
-        }
-
-        .stop-btn {
-            background: linear-gradient(135deg, #f44336 0%, #da190b 100%);
-            color: white;
-            box-shadow: 0 4px 15px rgba(244, 67, 54, 0.3);
-        }
-
-        .stop-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(244, 67, 54, 0.4);
-        }
-
-        .warning {
-            background: #fff3cd;
-            border-radius: 10px;
-            padding: 12px;
-            margin-top: 15px;
-            border: 1px solid #ffeaa7;
-            color: #856404;
-            font-size: 0.8rem;
-        }
-
-        .stats {
-            background: #f8f9fa;
-            border-radius: 10px;
-            padding: 12px;
-            margin-top: 15px;
-            text-align: center;
-            font-size: 0.85rem;
-            color: #666;
-        }
-
-        .cycle-info {
-            background: #e8f5e8;
-            border-radius: 8px;
-            padding: 10px;
-            margin-top: 10px;
-            text-align: center;
-            font-size: 0.8rem;
-            color: #2e7d32;
-        }
-    </style>
+  <title>FB Scraper</title>
+  <style>
+    body {
+      width: 300px;
+      padding: 20px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #1877f2 0%, #0c5bcc 100%);
+      margin: 0;
+    }
+    .container {
+      background: white;
+      border-radius: 10px;
+      padding: 20px;
+      text-align: center;
+    }
+    h1 {
+      color: #1877f2;
+      margin-bottom: 20px;
+      font-size: 18px;
+    }
+    .status {
+      padding: 15px;
+      background: #f8f9fa;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+    .start-btn {
+      width: 100%;
+      padding: 15px;
+      background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    .start-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 15px rgba(40, 167, 69, 0.4);
+    }
+    .info {
+      font-size: 14px;
+      color: #666;
+      margin-top: 15px;
+      line-height: 1.4;
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <h1>📱 FB Marketplace Scraper</h1>
-        <p class="subtitle">Automated Phone Listings Scraper</p>
+  <div class="container">
+    <h1>📱 FB Marketplace Scraper</h1>
 
-        <div id="status" class="status stopped">
-            Ready to scrape
-        </div>
-
-        <div class="main-controls">
-            <button id="toggleBtn" class="main-btn start-btn">
-                🚀 Start Scraping
-            </button>
-            <button id="openMarketplaceBtn" class="main-btn" style="background: linear-gradient(135deg, #1877f2 0%, #0c5bcc 100%); color: white;">
-                🌐 Marketplace
-            </button>
-        </div>
-
-        <div class="instructions">
-            <div class="step">Navigate to Facebook Marketplace</div>
-            <div class="step">Click "Start Scraping" or use bookmarklet</div>
-            <div class="step">Auto-refresh every 5 seconds</div>
-            <div class="step">CSV files download automatically</div>
-        </div>
-
-        <div class="bookmarklet-section">
-            <div class="bookmarklet-title">🎯 Bookmarklet (Alternative Method)</div>
-            <button id="bookmarkletBtn" class="bookmarklet-btn">
-                🎯 Drag to Bookmarks Bar
-            </button>
-            <p style="font-size: 0.8rem; color: #666; margin-bottom: 8px;">
-                Drag this button to your bookmarks bar, then click it on Marketplace pages
-            </p>
-        </div>
-
-        <div class="auto-scrape-section">
-            <div class="auto-scrape-title">⚡ Quick Auto-Start</div>
-            <input type="url"
-                   id="marketplaceUrl"
-                   class="url-input"
-                   placeholder="https://www.facebook.com/marketplace"
-                   value="https://www.facebook.com/marketplace">
-            <button id="autoScrapeBtn" class="open-url-btn">
-                🚀 Open with Auto-Scraping
-            </button>
-        </div>
-
-        <div id="cycleInfo" class="cycle-info" style="display: none;">
-            <strong>🔄 Auto-refresh active</strong><br>
-            <span id="cycleCount">Cycle 1/10</span>
-        </div>
-
-        <div class="stats">
-            <div id="statsText">Ready to start</div>
-        </div>
-
-        <div class="warning">
-            <strong>⚠️ Auto-refresh active:</strong> Page will refresh every 5 seconds during scraping.
-        </div>
+    <div class="status">
+      Click Start to begin scraping
     </div>
 
-    <script src="popup.js"></script>
+    <button id="startBtn" class="start-btn">
+      🚀 Start Scraping
+    </button>
+
+    <div class="info">
+      Go to Facebook Marketplace and click Start<br>
+      The page will auto-refresh every 5 seconds
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
 </body>
 </html>
