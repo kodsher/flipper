@@ -8,7 +8,7 @@
 
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: linear-gradient(135deg, #1877f2 0%, #0c5bcc 100%);
+    background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
     min-height: 100vh;
     color: #333;
 }
@@ -163,7 +163,7 @@ body {
 .stat-value {
     font-size: 2rem;
     font-weight: bold;
-    color: #1877f2;
+    color: #dc2626;
     margin-bottom: 5px;
     word-break: break-word;
 }
@@ -223,7 +223,7 @@ body {
 .filter-group select:focus,
 .filter-group input:focus {
     outline: none;
-    border-color: #1877f2;
+    border-color: #dc2626;
     box-shadow: 0 0 0 3px rgba(24, 119, 242, 0.1);
 }
 
@@ -263,13 +263,13 @@ body {
     width: 20px;
     height: 20px;
     border-radius: 50%;
-    background: #1877f2;
+    background: #dc2626;
     cursor: pointer;
     transition: background 0.3s ease;
 }
 
 .range-sliders input[type="range"]::-webkit-slider-thumb:hover {
-    background: #0c5bcc;
+    background: #991b1b;
 }
 
 .filter-summary {
@@ -301,8 +301,8 @@ body {
 }
 
 .model-tag.active, .generation-tag.active {
-    background: linear-gradient(135deg, #1877f2 0%, #0c5bcc 100%);
-    border-color: #1877f2;
+    background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
+    border-color: #dc2626;
     box-shadow: 0 4px 12px rgba(24, 119, 242, 0.3);
 }
 
@@ -371,7 +371,7 @@ body {
 }
 
 .listings-table thead {
-    background: linear-gradient(135deg, #1877f2 0%, #0c5bcc 100%);
+    background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
     color: white;
 }
 
@@ -415,7 +415,7 @@ body {
 
 .model-badge {
     display: inline-block;
-    background: linear-gradient(135deg, #1877f2 0%, #0c5bcc 100%);
+    background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
     color: white;
     padding: 4px 10px;
     border-radius: 15px;
@@ -447,7 +447,7 @@ body {
 }
 
 .title-link {
-    color: #1877f2;
+    color: #dc2626;
     font-size: 0.85rem;
     line-height: 1.4;
     white-space: pre-wrap;
@@ -464,9 +464,9 @@ body {
 
 .price-value {
     font-weight: bold;
-    color: #1877f2;
+    color: #dc2626;
     font-size: 1rem;
-    background: #e8f2ff;
+    background: #fee2e2;
     padding: 4px 8px;
     border-radius: 8px;
     display: inline-block;
@@ -498,7 +498,7 @@ body {
 
 .view-link {
     display: inline-block;
-    background: linear-gradient(135deg, #1877f2 0%, #0c5bcc 100%);
+    background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
     color: white;
     text-decoration: none;
     padding: 6px 12px;

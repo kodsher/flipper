@@ -463,7 +463,7 @@ const Dashboard = () => {
                         onClick={clearDatabaseAndPushToGitHub}
                         style={{
                             background: 'transparent',
-                            color: '#1877f2',
+                            color: '#dc2626',
                             border: '2px solid #1877f2',
                             padding: '8px 16px',
                             borderRadius: '6px',
@@ -780,7 +780,7 @@ const Dashboard = () => {
                                                     rel="noopener noreferrer"
                                                     className="title-link"
                                                     style={{
-                                                        color: '#1877f2',
+                                                        color: '#dc2626',
                                                         textDecoration: 'none',
                                                         cursor: 'pointer',
                                                         display: 'block',
