@@ -116,7 +116,7 @@ const Dashboard = () => {
             const clearButton = document.getElementById('clear-database-btn');
             if (clearButton) {
                 clearButton.disabled = true;
-                clearButton.textContent = '🔄 Clearing...';
+                clearButton.textContent = '🗑️ Clearing...';
             }
 
             console.log('🗑️ Clearing all phone listings from Firebase...');
@@ -146,7 +146,7 @@ const Dashboard = () => {
             const clearButton = document.getElementById('clear-database-btn');
             if (clearButton) {
                 clearButton.disabled = false;
-                clearButton.textContent = '🗑️ Clear Database';
+                clearButton.textContent = '🗑️';
             }
         }
     };
@@ -450,9 +450,9 @@ const Dashboard = () => {
                         id="clear-database-btn"
                         onClick={clearDatabaseAndPushToGitHub}
                         style={{
-                            background: 'linear-gradient(135deg, #dc3545 0%, #c82333 100%)',
-                            color: 'white',
-                            border: 'none',
+                            background: 'transparent',
+                            color: '#1877f2',
+                            border: '2px solid #1877f2',
                             padding: '8px 16px',
                             borderRadius: '6px',
                             fontWeight: '600',
@@ -460,10 +460,18 @@ const Dashboard = () => {
                             transition: 'all 0.3s ease',
                             fontSize: '0.9rem'
                         }}
-                        onMouseOver={(e) => e.target.style.transform = 'translateY(-1px)'}
-                        onMouseOut={(e) => e.target.style.transform = 'translateY(0)'}
+                        onMouseOver={(e) => {
+                            e.target.style.background = '#1877f2';
+                            e.target.style.color = 'white';
+                            e.target.style.transform = 'translateY(-1px)';
+                        }}
+                        onMouseOut={(e) => {
+                            e.target.style.background = 'transparent';
+                            e.target.style.color = '#1877f2';
+                            e.target.style.transform = 'translateY(0)';
+                        }}
                     >
-                        🔄
+                        🗑️
                     </button>
                 </div>
 
