@@ -4,8 +4,8 @@
   "description": "Real-time dashboard for phone flipping CSV monitoring",
   "main": "index.js",
   "scripts": {
-    "start": "python3 -m http.server 8000",
-    "dev": "python3 -m http.server 8000"
+    "start": "python3 -m http.server 3001",
+    "dev": "python3 -m http.server 3001"
   },
   "dependencies": {
     "react": "^18.2.0",
