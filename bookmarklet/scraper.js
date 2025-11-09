@@ -38,16 +38,8 @@ function scrapeAndRefresh() {
 
   console.log(`📱 Scrape cycle ${scrapeCount + 1}`);
 
-  // Scrape current page
+  // Scrape current page (will handle refresh internally)
   scrapePage();
-
-  // Wait 3 seconds then refresh (gives time for download to complete)
-  setTimeout(() => {
-    if (isScraping) {
-      console.log("🔄 Refreshing page for next scrape cycle...");
-      location.reload();
-    }
-  }, 3000);
 }
 
 function scrapePage() {
@@ -133,7 +125,7 @@ function scrapePage() {
 
       scrapeCount++;
 
-      // Start refresh timer immediately after download
+      // Schedule refresh after giving time for download to complete
       setTimeout(() => {
         if (isScraping) {
           console.log("🔄 Refreshing page for next scrape cycle...");
