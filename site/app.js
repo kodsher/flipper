@@ -25,6 +25,7 @@ const Dashboard = () => {
     // Filtering states
     const [selectedModels, setSelectedModels] = useState(['all']);
     const [selectedGenerations, setSelectedGenerations] = useState(['all']);
+    const [selectedSearchCities, setSelectedSearchCities] = useState(['all']);  // Search city filter
     const [priceRange, setPriceRange] = useState({ min: 0, max: 10000 });
     const [sortBy, setSortBy] = useState('price');
     const [sortOrder, setSortOrder] = useState('asc');
@@ -150,6 +151,47 @@ const Dashboard = () => {
         });
     }, []);
 
+    
+    // Function to get unique search cities for filtering
+    const getUniqueSearchCities = useCallback(() => {
+        const cities = new Set();
+        phoneListings.forEach(listing => {
+            const city = listing.search_city;
+            if (city && city !== 'Unknown') {
+                cities.add(city);
+            }
+        });
+        return Array.from(cities).sort();
+    }, [phoneListings]);
+
+    // Function to get count for each search city
+    const getSearchCityCounts = useCallback(() => {
+        const counts = { all: phoneListings.length };
+        phoneListings.forEach(listing => {
+            const city = listing.search_city || 'Unknown';
+            counts[city] = (counts[city] || 0) + 1;
+        });
+        return counts;
+    }, [phoneListings]);
+
+    // Function to toggle search city selection
+    const toggleSearchCity = useCallback((searchCity) => {
+        setSelectedSearchCities(prev => {
+            if (searchCity === 'all') {
+                return ['all'];
+            }
+            let newSelection = prev.includes(searchCity)
+                ? prev.filter(c => c !== searchCity)
+                : [...prev.filter(c => c !== 'all'), searchCity];
+
+            // If no search cities selected, default to 'all'
+            if (newSelection.length === 0) {
+                return ['all'];
+            }
+            return newSelection;
+        });
+    }, []);
+
     // Function to toggle hide/unhide an item
     const toggleHideItem = async (listingId, currentlyHidden) => {
         try {
@@ -180,13 +222,13 @@ const Dashboard = () => {
 
     // Function to clear all data from database and push to GitHub
     const clearDatabaseAndPushToGitHub = async () => {
-        // Confirmation dialog
+        // Confirmation dialog with expanded information
         const isConfirmed = window.confirm(
-            "⚠️ Are you sure you want to delete all phone listings from the database?\n\n" +
-            "This action will:\n" +
-            "• Delete all listings from Firebase\n" +
-            "• Commit the changes to GitHub\n" +
-            "• Push the update to the remote repository\n\n" +
+            "⚠️ Are you sure you want to delete all data from both databases?\n\n" +
+            "This action will clear:\n" +
+            "• All phone listings from main database\n" +
+            "• All processed hashes from CSV monitor\n" +
+            "• Reset duplicate detection memory\n\n" +
             "This cannot be undone!"
         );
 
@@ -206,15 +248,24 @@ const Dashboard = () => {
             const listingsRef = firebase.database().ref('phone_listings');
             await listingsRef.remove();
 
-            console.log('✅ All listings cleared from Firebase');
+            console.log('🗑️ Clearing processed hashes from CSV monitor...');
 
-            // Trigger GitHub commit and push via a serverless function or direct API
-            // For now, we'll simulate this with a success message
-            // In a real implementation, you'd call a backend API endpoint
+            // Clear all processed hashes from CSV monitor
+            const processedHashesRef = firebase.database().ref('processed_hashes');
+            await processedHashesRef.remove();
+
+            console.log('✅ All data cleared from Firebase');
             console.log('📤 Pushing changes to GitHub...');
 
-            // Show success message
-            alert('✅ Database cleared successfully!\n\nAll phone listings have been deleted from Firebase.\nNote: GitHub integration requires backend setup.');
+            // Show success message with Firebase console links
+            alert(
+                '✅ Database cleared successfully!\n\n' +
+                'All phone listings and processed hashes have been deleted from Firebase.\n\n' +
+                '🔗 Firebase Console Links:\n' +
+                '• Main Database: https://console.firebase.google.com/project/phone-flipping/database/phone-flipping-default-rtdb/data/~2Fphone_listings\n' +
+                '• CSV Monitor: https://console.firebase.google.com/project/phone-flipping/database/phone-flipping-default-rtdb/data/~2Fprocessed_hashes\n\n' +
+                'Note: GitHub integration requires backend setup.'
+            );
 
             // Refresh data
             fetchData();
@@ -288,6 +339,14 @@ const Dashboard = () => {
             });
         }
 
+        // Filter by search cities (multiple selection)
+        if (!selectedSearchCities.includes('all')) {
+            filtered = filtered.filter(listing => {
+                const searchCity = listing.search_city || 'Unknown';
+                return selectedSearchCities.includes(searchCity);
+            });
+        }
+
         // Filter by price range
         filtered = filtered.filter(listing => {
             const price = listing.price || 0;
@@ -351,7 +410,7 @@ const Dashboard = () => {
         });
 
         return filtered;
-    }, [phoneListings, selectedModels, selectedGenerations, priceRange, sortBy, sortOrder, searchTerm, showHidden, showFavorites, safeParseDate, getRelativeTime]);
+    }, [phoneListings, selectedModels, selectedGenerations, selectedSearchCities, priceRange, sortBy, sortOrder, searchTerm, showHidden, showFavorites, safeParseDate, getRelativeTime]);
 
     // Helper function to safely parse date
     const safeParseDate = useCallback((dateString) => {
@@ -515,6 +574,7 @@ const Dashboard = () => {
     const uniqueModels = getUniqueModels();
     const modelCounts = getModelCounts();
     const generationCounts = getGenerationCounts();
+    const searchCityCounts = getSearchCityCounts();
 
     if (loading) {
         return (
@@ -663,6 +723,47 @@ const Dashboard = () => {
                         ))}
                     </div>
                 )}
+
+                {/* Search City Tags */}
+                <div className="search-city-tags" style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '12px', marginTop: '12px' }}>
+                    <button
+                        className={`search-city-tag ${selectedSearchCities.includes('all') ? 'active' : ''}`}
+                        onClick={() => toggleSearchCity('all')}
+                        style={{
+                            background: selectedSearchCities.includes('all') ? '#1877f2' : '#f8f9fa',
+                            color: selectedSearchCities.includes('all') ? 'white' : '#333',
+                            border: '2px solid #e1e1e1',
+                            padding: '8px 16px',
+                            borderRadius: '20px',
+                            fontWeight: '600',
+                            cursor: 'pointer',
+                            transition: 'all 0.3s ease',
+                            fontSize: '14px'
+                        }}
+                    >
+                        All Cities ({searchCityCounts.all})
+                    </button>
+                    {getUniqueSearchCities().map(searchCity => (
+                        <button
+                            key={searchCity}
+                            className={`search-city-tag ${selectedSearchCities.includes(searchCity) ? 'active' : ''}`}
+                            onClick={() => toggleSearchCity(searchCity)}
+                            style={{
+                                background: selectedSearchCities.includes(searchCity) ? '#1877f2' : '#f8f9fa',
+                                color: selectedSearchCities.includes(searchCity) ? 'white' : '#333',
+                                border: '2px solid #e1e1e1',
+                                padding: '8px 16px',
+                                borderRadius: '20px',
+                                fontWeight: '600',
+                                cursor: 'pointer',
+                                transition: 'all 0.3s ease',
+                                fontSize: '14px'
+                            }}
+                        >
+                            {searchCity} ({searchCityCounts[searchCity] || 0})
+                        </button>
+                    ))}
+                </div>
 
                 <div style={{ marginTop: '15px' }}>
                     <input
