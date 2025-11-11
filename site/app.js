@@ -129,18 +129,23 @@ const Dashboard = () => {
 
         // Check if it's a significant right swipe (more than 80px or quick swipe)
         if ((diffX > 80) || (diffX > 40 && timeDiff < 300)) {
-            // Hide the listing with animation
-            row.classList.add('swiped-right');
-
             // Provide haptic feedback if available (iOS)
             if (navigator.vibrate) {
                 navigator.vibrate(50);
             }
 
-            // Actually hide the listing after animation completes
+            // Hide the listing immediately and let React handle the animation
+            toggleHideItem(listingId, false);
+
+            // Keep the visual swipe animation smooth
+            row.style.transform = 'translateX(100%)';
+            row.style.opacity = '0';
+
+            // Clean up immediately
             setTimeout(() => {
-                toggleHideItem(listingId, false);
-            }, 300);
+                row.style.transform = '';
+                row.style.opacity = '';
+            }, 50);
         } else {
             // Animate back to original position
             row.style.transform = 'translateX(0)';
@@ -195,10 +200,16 @@ const Dashboard = () => {
             row.classList.remove('swiping');
 
             if ((diffX > 80) || (diffX > 40 && timeDiff < 300)) {
-                row.classList.add('swiped-right');
+                // Hide immediately and animate smoothly
+                toggleHideItem(listingId, false);
+                row.style.transform = 'translateX(100%)';
+                row.style.opacity = '0';
+
+                // Clean up immediately
                 setTimeout(() => {
-                    toggleHideItem(listingId, false);
-                }, 300);
+                    row.style.transform = '';
+                    row.style.opacity = '';
+                }, 50);
             } else {
                 row.style.transform = 'translateX(0)';
             }

@@ -719,6 +719,15 @@ body.dark-mode .listings-table th[style*="cursor: pointer"]:hover {
     pointer-events: none;
 }
 
+/* Ensure smooth transitions for instant hide */
+.listings-table tbody tr {
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.listings-table tbody tr.swiped-right {
+    transition: opacity 0.15s ease, transform 0.15s ease, height 0.2s ease, padding 0.2s ease, margin 0.2s ease;
+}
+
 .listings-table tbody tr.swiped-right td {
     padding: 0;
     border: none;
