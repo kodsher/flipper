@@ -100,8 +100,7 @@ const Dashboard = () => {
 
                 // Show swipe hint if swiped enough
                 if (diffX > 50) {
-                    const hint = e.currentTarget.querySelector('.swipe-hint');
-                    if (hint) hint.style.opacity = '1';
+                    e.currentTarget.classList.add('show-swipe-hint');
                 }
             } else {
                 e.currentTarget.style.transform = 'translateX(0)';
@@ -138,8 +137,7 @@ const Dashboard = () => {
         }
 
         // Hide swipe hint
-        const hint = row.querySelector('.swipe-hint');
-        if (hint) hint.style.opacity = '0';
+        row.classList.remove('show-swipe-hint');
 
         // Clean up dataset
         delete row.dataset.startX;
@@ -1184,7 +1182,6 @@ const Dashboard = () => {
                                         onTouchMove={handleTouchMove}
                                         onTouchEnd={handleTouchEnd}
                                     >
-                                        <div className="swipe-hint">Slide to hide</div>
                                         <td className="model-cell" style={{ width: '180px', maxWidth: '180px', display: 'none' }}>
                                             <div style={{
                                                 color: '#333',
