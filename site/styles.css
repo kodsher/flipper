@@ -721,11 +721,26 @@ body.dark-mode .listings-table th[style*="cursor: pointer"]:hover {
 
 /* Ensure smooth transitions for instant hide */
 .listings-table tbody tr {
-    transition: opacity 0.2s ease, transform 0.2s ease;
+    transition: opacity 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .listings-table tbody tr.swiped-right {
-    transition: opacity 0.15s ease, transform 0.15s ease, height 0.2s ease, padding 0.2s ease, margin 0.2s ease;
+    transition: opacity 0.15s ease, transform 0.15s ease, height 0.2s ease, padding 0.2s ease, margin 0.2s ease, box-shadow 0.15s ease;
+}
+
+/* Enhanced swipe feedback */
+.listings-table tbody tr.swiping {
+    box-shadow: 0 4px 20px rgba(24, 119, 242, 0.2);
+    transform: scale(1.02);
+}
+
+/* Visual feedback during swipe */
+.listings-table tbody tr:not(.swiped-right):hover {
+    cursor: grab;
+}
+
+.listings-table tbody tr:active {
+    cursor: grabbing;
 }
 
 .listings-table tbody tr.swiped-right td {

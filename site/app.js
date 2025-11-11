@@ -26,6 +26,7 @@ const Dashboard = () => {
     const [selectedModels, setSelectedModels] = useState(['all']);
     const [selectedGenerations, setSelectedGenerations] = useState(['all']);
     const [selectedSearchCities, setSelectedSearchCities] = useState(['all']);  // Search city filter
+    const [selectedTimeRanges, setSelectedTimeRanges] = useState(['all']);  // Time-based filter
     const [priceRange, setPriceRange] = useState({ min: 0, max: 10000 });
     const [sortBy, setSortBy] = useState('price');
     const [sortOrder, setSortOrder] = useState('asc');
@@ -402,6 +403,25 @@ const Dashboard = () => {
         });
     }, []);
 
+    // Function to toggle time range selection
+    const toggleTimeRange = useCallback((timeRange) => {
+        setSelectedTimeRanges(prev => {
+            if (timeRange === 'all') {
+                return ['all'];
+            }
+            let newSelection = prev.includes(timeRange)
+                ? prev.filter(t => t !== timeRange)
+                : [...prev.filter(t => t !== 'all'), timeRange];
+
+            // If no time ranges selected, default to 'all'
+            if (newSelection.length === 0) {
+                return ['all'];
+            }
+
+            return newSelection;
+        });
+    }, []);
+
     // Function to toggle hide/unhide an item
     const toggleHideItem = async (listingId, currentlyHidden) => {
         try {
@@ -570,6 +590,31 @@ const Dashboard = () => {
             });
         }
 
+        // Filter by time ranges (multiple selection)
+        if (!selectedTimeRanges.includes('all')) {
+            filtered = filtered.filter(listing => {
+                const foundAt = listing.found_at;
+                if (!foundAt) return false;
+
+                const now = new Date();
+                const foundTime = new Date(foundAt);
+                const hoursDiff = (now - foundTime) / (1000 * 60 * 60);
+
+                return selectedTimeRanges.some(selectedRange => {
+                    if (selectedRange === 'just_now') {
+                        return hoursDiff <= 12;
+                    } else if (selectedRange === '12_hours') {
+                        return hoursDiff <= 24 && hoursDiff > 12;
+                    } else if (selectedRange === '24_hours') {
+                        return hoursDiff <= 48 && hoursDiff > 24;
+                    } else if (selectedRange === '3_days') {
+                        return hoursDiff <= 72 && hoursDiff > 48;
+                    }
+                    return false;
+                });
+            });
+        }
+
         // Filter by price range
         filtered = filtered.filter(listing => {
             const price = listing.price || 0;
@@ -633,7 +678,7 @@ const Dashboard = () => {
         });
 
         return filtered;
-    }, [phoneListings, selectedModels, selectedGenerations, selectedSearchCities, priceRange, sortBy, sortOrder, searchTerm, showHidden, showFavorites, safeParseDate, getRelativeTime]);
+    }, [phoneListings, selectedModels, selectedGenerations, selectedSearchCities, selectedTimeRanges, priceRange, sortBy, sortOrder, searchTerm, showHidden, showFavorites, safeParseDate, getRelativeTime]);
 
     // Helper function to safely parse date
     const safeParseDate = useCallback((dateString) => {
@@ -1074,6 +1119,95 @@ const Dashboard = () => {
                             {searchCity} ({searchCityCounts[searchCity] || 0})
                         </button>
                     ))}
+                </div>
+
+                {/* Time Range Tags */}
+                <div className="time-range-tags" style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '12px', marginTop: '12px' }}>
+                    <button
+                        className={`time-range-tag ${selectedTimeRanges.includes('all') ? 'active' : ''}`}
+                        onClick={() => toggleTimeRange('all')}
+                        style={{
+                            background: selectedTimeRanges.includes('all') ? '#1877f2' : '#f8f9fa',
+                            color: selectedTimeRanges.includes('all') ? 'white' : '#333',
+                            border: '2px solid #e1e1e1',
+                            padding: '8px 16px',
+                            borderRadius: '20px',
+                            fontWeight: '600',
+                            cursor: 'pointer',
+                            transition: 'all 0.3s ease',
+                            fontSize: '14px'
+                        }}
+                    >
+                        All Time
+                    </button>
+                    <button
+                        className={`time-range-tag ${selectedTimeRanges.includes('just_now') ? 'active' : ''}`}
+                        onClick={() => toggleTimeRange('just_now')}
+                        style={{
+                            background: selectedTimeRanges.includes('just_now') ? '#1877f2' : '#f8f9fa',
+                            color: selectedTimeRanges.includes('just_now') ? 'white' : '#333',
+                            border: '2px solid #e1e1e1',
+                            padding: '8px 16px',
+                            borderRadius: '20px',
+                            fontWeight: '600',
+                            cursor: 'pointer',
+                            transition: 'all 0.3s ease',
+                            fontSize: '14px'
+                        }}
+                    >
+                        Within 12 Hours
+                    </button>
+                    <button
+                        className={`time-range-tag ${selectedTimeRanges.includes('12_hours') ? 'active' : ''}`}
+                        onClick={() => toggleTimeRange('12_hours')}
+                        style={{
+                            background: selectedTimeRanges.includes('12_hours') ? '#1877f2' : '#f8f9fa',
+                            color: selectedTimeRanges.includes('12_hours') ? 'white' : '#333',
+                            border: '2px solid #e1e1e1',
+                            padding: '8px 16px',
+                            borderRadius: '20px',
+                            fontWeight: '600',
+                            cursor: 'pointer',
+                            transition: 'all 0.3s ease',
+                            fontSize: '14px'
+                        }}
+                    >
+                        12-24 Hours
+                    </button>
+                    <button
+                        className={`time-range-tag ${selectedTimeRanges.includes('24_hours') ? 'active' : ''}`}
+                        onClick={() => toggleTimeRange('24_hours')}
+                        style={{
+                            background: selectedTimeRanges.includes('24_hours') ? '#1877f2' : '#f8f9fa',
+                            color: selectedTimeRanges.includes('24_hours') ? 'white' : '#333',
+                            border: '2px solid #e1e1e1',
+                            padding: '8px 16px',
+                            borderRadius: '20px',
+                            fontWeight: '600',
+                            cursor: 'pointer',
+                            transition: 'all 0.3s ease',
+                            fontSize: '14px'
+                        }}
+                    >
+                        1-2 Days
+                    </button>
+                    <button
+                        className={`time-range-tag ${selectedTimeRanges.includes('3_days') ? 'active' : ''}`}
+                        onClick={() => toggleTimeRange('3_days')}
+                        style={{
+                            background: selectedTimeRanges.includes('3_days') ? '#1877f2' : '#f8f9fa',
+                            color: selectedTimeRanges.includes('3_days') ? 'white' : '#333',
+                            border: '2px solid #e1e1e1',
+                            padding: '8px 16px',
+                            borderRadius: '20px',
+                            fontWeight: '600',
+                            cursor: 'pointer',
+                            transition: 'all 0.3s ease',
+                            fontSize: '14px'
+                        }}
+                    >
+                        2-3 Days
+                    </button>
                 </div>
 
                 <div style={{ marginTop: '15px' }}>
