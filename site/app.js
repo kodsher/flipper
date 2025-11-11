@@ -82,24 +82,44 @@ const Dashboard = () => {
         return Array.from(models).sort();
     }, [phoneListings]);
 
-    // Function to get count for each model
+    // Function to get count for each model category
     const getModelCounts = useCallback(() => {
-        const counts = { all: phoneListings.length, iphone: 0, other: 0 };
+        const counts = {
+            all: phoneListings.length,
+            iphone: 0,
+            ipad: 0,
+            macbook: 0,
+            android: 0,
+            android_tablet: 0,
+            other_computers: 0,
+            other: 0
+        };
+
         phoneListings.forEach(listing => {
-            const model = listing.model || 'Unknown';
-            if (model.toLowerCase().includes('iphone')) {
+            const model = (listing.model || 'Unknown').toLowerCase();
+
+            if (model.includes('iphone')) {
                 counts.iphone++;
+            } else if (model.includes('ipad')) {
+                counts.ipad++;
+            } else if (model.includes('macbook') || model.includes('mac book')) {
+                counts.macbook++;
+            } else if (model.includes('samsung') || model.includes('galaxy') || model.includes('pixel') || model.includes('oneplus') || model.includes('lg') || model.includes('sony') || model.includes('motorola') || model.includes('nokia') || model.includes('htc')) {
+                counts.android++;
+            } else if (model.includes('android tablet') || model.includes('galaxy tab') || model.includes('pixel tablet')) {
+                counts.android_tablet++;
+            } else if (model.includes('laptop') || model.includes('dell') || model.includes('hp') || model.includes('lenovo') || model.includes('asus') || model.includes('acer') || model.includes('microsoft') || model.includes('surface') || model.includes('pc')) {
+                counts.other_computers++;
             } else {
                 counts.other++;
             }
-            counts[model] = (counts[model] || 0) + 1;
         });
         return counts;
     }, [phoneListings]);
 
     // Function to get count for each generation
     const getGenerationCounts = useCallback(() => {
-        const counts = { all: 0, '17': 0, '16': 0, '15': 0, '14': 0, '13': 0, older: 0 };
+        const counts = { all: 0, '17': 0, '16': 0, '15': 0, '14': 0, older: 0 };
         phoneListings.forEach(listing => {
             const model = listing.model || '';
             if (model.toLowerCase().includes('iphone')) {
@@ -108,8 +128,7 @@ const Dashboard = () => {
                 else if (model.includes('16')) counts['16']++;
                 else if (model.includes('15')) counts['15']++;
                 else if (model.includes('14')) counts['14']++;
-                else if (model.includes('13')) counts['13']++;
-                else counts.older++;
+                else counts.older++; // 13 and older models
             }
         });
         return counts;
@@ -299,20 +318,34 @@ const Dashboard = () => {
     const getFilteredListings = useCallback(() => {
         let filtered = phoneListings;
 
-        // Filter by models (multiple selection)
+        // Filter by model categories (multiple selection)
         if (!selectedModels.includes('all')) {
             filtered = filtered.filter(listing => {
-                const model = listing.model || '';
+                const model = (listing.model || 'Unknown').toLowerCase();
 
-                // Check if this listing matches any selected model
-                return selectedModels.some(selectedModel => {
-                    if (selectedModel === 'iphone') {
-                        return model.toLowerCase().includes('iphone');
-                    } else if (selectedModel === 'other') {
-                        return !model.toLowerCase().includes('iphone');
-                    } else {
-                        return model === selectedModel;
+                // Check if this listing matches any selected category
+                return selectedModels.some(selectedCategory => {
+                    if (selectedCategory === 'iphone') {
+                        return model.includes('iphone');
+                    } else if (selectedCategory === 'ipad') {
+                        return model.includes('ipad');
+                    } else if (selectedCategory === 'macbook') {
+                        return model.includes('macbook') || model.includes('mac book');
+                    } else if (selectedCategory === 'android') {
+                        return model.includes('samsung') || model.includes('galaxy') || model.includes('pixel') || model.includes('oneplus') || model.includes('lg') || model.includes('sony') || model.includes('motorola') || model.includes('nokia') || model.includes('htc');
+                    } else if (selectedCategory === 'android_tablet') {
+                        return model.includes('android tablet') || model.includes('galaxy tab') || model.includes('pixel tablet');
+                    } else if (selectedCategory === 'other_computers') {
+                        return model.includes('laptop') || model.includes('dell') || model.includes('hp') || model.includes('lenovo') || model.includes('asus') || model.includes('acer') || model.includes('microsoft') || model.includes('surface') || model.includes('pc');
+                    } else if (selectedCategory === 'other') {
+                        return !model.includes('iphone') && !model.includes('ipad') && !model.includes('macbook') &&
+                               !model.includes('samsung') && !model.includes('galaxy') && !model.includes('pixel') && !model.includes('oneplus') &&
+                               !model.includes('lg') && !model.includes('sony') && !model.includes('motorola') && !model.includes('nokia') && !model.includes('htc') &&
+                               !model.includes('android tablet') && !model.includes('galaxy tab') && !model.includes('pixel tablet') &&
+                               !model.includes('laptop') && !model.includes('dell') && !model.includes('hp') && !model.includes('lenovo') &&
+                               !model.includes('asus') && !model.includes('acer') && !model.includes('microsoft') && !model.includes('surface') && !model.includes('pc');
                     }
+                    return false;
                 });
             });
         }
@@ -330,8 +363,7 @@ const Dashboard = () => {
                 // Check if this iPhone matches any selected generation
                 return selectedGenerations.some(selectedGeneration => {
                     if (selectedGeneration === 'older') {
-                        return !model.includes('iPhone 13') && !model.includes('iPhone 14') &&
-                               !model.includes('iPhone 15') && !model.includes('iPhone 16') && !model.includes('iPhone 17');
+                        return !model.includes('17') && !model.includes('16') && !model.includes('15') && !model.includes('14');
                     } else {
                         return model.includes(selectedGeneration);
                     }
@@ -631,7 +663,7 @@ const Dashboard = () => {
                     </button>
                 </div>
 
-                {/* Phone Model Tags */}
+                {/* Device Category Tags */}
                 <div className="model-tags" style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '12px' }}>
                     <button
                         className={`model-tag ${selectedModels.includes('all') ? 'active' : ''}`}
@@ -647,7 +679,7 @@ const Dashboard = () => {
                             transition: 'all 0.3s ease'
                         }}
                     >
-                        All Models ({modelCounts.all})
+                        All ({modelCounts.all})
                     </button>
                     <button
                         className={`model-tag ${selectedModels.includes('iphone') ? 'active' : ''}`}
@@ -664,6 +696,86 @@ const Dashboard = () => {
                         }}
                     >
                         iPhone ({modelCounts.iphone})
+                    </button>
+                    <button
+                        className={`model-tag ${selectedModels.includes('ipad') ? 'active' : ''}`}
+                        onClick={() => toggleModel('ipad')}
+                        style={{
+                            background: selectedModels.includes('ipad') ? '#1877f2' : '#f8f9fa',
+                            color: selectedModels.includes('ipad') ? 'white' : '#333',
+                            border: '2px solid #e1e1e1',
+                            padding: '8px 16px',
+                            borderRadius: '20px',
+                            fontWeight: '600',
+                            cursor: 'pointer',
+                            transition: 'all 0.3s ease'
+                        }}
+                    >
+                        iPad ({modelCounts.ipad})
+                    </button>
+                    <button
+                        className={`model-tag ${selectedModels.includes('macbook') ? 'active' : ''}`}
+                        onClick={() => toggleModel('macbook')}
+                        style={{
+                            background: selectedModels.includes('macbook') ? '#1877f2' : '#f8f9fa',
+                            color: selectedModels.includes('macbook') ? 'white' : '#333',
+                            border: '2px solid #e1e1e1',
+                            padding: '8px 16px',
+                            borderRadius: '20px',
+                            fontWeight: '600',
+                            cursor: 'pointer',
+                            transition: 'all 0.3s ease'
+                        }}
+                    >
+                        MacBook ({modelCounts.macbook})
+                    </button>
+                    <button
+                        className={`model-tag ${selectedModels.includes('android') ? 'active' : ''}`}
+                        onClick={() => toggleModel('android')}
+                        style={{
+                            background: selectedModels.includes('android') ? '#1877f2' : '#f8f9fa',
+                            color: selectedModels.includes('android') ? 'white' : '#333',
+                            border: '2px solid #e1e1e1',
+                            padding: '8px 16px',
+                            borderRadius: '20px',
+                            fontWeight: '600',
+                            cursor: 'pointer',
+                            transition: 'all 0.3s ease'
+                        }}
+                    >
+                        Android ({modelCounts.android})
+                    </button>
+                    <button
+                        className={`model-tag ${selectedModels.includes('android_tablet') ? 'active' : ''}`}
+                        onClick={() => toggleModel('android_tablet')}
+                        style={{
+                            background: selectedModels.includes('android_tablet') ? '#1877f2' : '#f8f9fa',
+                            color: selectedModels.includes('android_tablet') ? 'white' : '#333',
+                            border: '2px solid #e1e1e1',
+                            padding: '8px 16px',
+                            borderRadius: '20px',
+                            fontWeight: '600',
+                            cursor: 'pointer',
+                            transition: 'all 0.3s ease'
+                        }}
+                    >
+                        Android Tablets ({modelCounts.android_tablet})
+                    </button>
+                    <button
+                        className={`model-tag ${selectedModels.includes('other_computers') ? 'active' : ''}`}
+                        onClick={() => toggleModel('other_computers')}
+                        style={{
+                            background: selectedModels.includes('other_computers') ? '#1877f2' : '#f8f9fa',
+                            color: selectedModels.includes('other_computers') ? 'white' : '#333',
+                            border: '2px solid #e1e1e1',
+                            padding: '8px 16px',
+                            borderRadius: '20px',
+                            fontWeight: '600',
+                            cursor: 'pointer',
+                            transition: 'all 0.3s ease'
+                        }}
+                    >
+                        Other Computers ({modelCounts.other_computers})
                     </button>
                     <button
                         className={`model-tag ${selectedModels.includes('other') ? 'active' : ''}`}
@@ -684,7 +796,7 @@ const Dashboard = () => {
                 </div>
 
                 {/* iPhone Generation Tags */}
-                {selectedModels.includes('iphone') && (
+                {selectedModels.some(model => model && model.toLowerCase().includes('iphone')) && (
                     <div className="generation-tags" style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '12px' }}>
                         <button
                             className={`generation-tag ${selectedGenerations.includes('all') ? 'active' : ''}`}
@@ -702,7 +814,7 @@ const Dashboard = () => {
                         >
                             All iPhones ({generationCounts.all})
                         </button>
-                        {['17', '16', '15', '14', '13', 'older'].map(gen => (
+                        {['17', '16', '15', '14', 'older'].map(gen => (
                             <button
                                 key={gen}
                                 className={`generation-tag ${selectedGenerations.includes(gen) ? 'active' : ''}`}
