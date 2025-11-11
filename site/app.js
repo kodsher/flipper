@@ -602,13 +602,13 @@ const Dashboard = () => {
 
                 return selectedTimeRanges.some(selectedRange => {
                     if (selectedRange === 'just_now') {
-                        return hoursDiff <= 12;
+                        return hoursDiff <= 1;
                     } else if (selectedRange === '12_hours') {
-                        return hoursDiff <= 24 && hoursDiff > 12;
+                        return hoursDiff <= 12;
                     } else if (selectedRange === '24_hours') {
-                        return hoursDiff <= 48 && hoursDiff > 24;
+                        return hoursDiff <= 24;
                     } else if (selectedRange === '3_days') {
-                        return hoursDiff <= 72 && hoursDiff > 48;
+                        return hoursDiff <= 72;
                     }
                     return false;
                 });
@@ -1138,7 +1138,7 @@ const Dashboard = () => {
                             fontSize: '14px'
                         }}
                     >
-                        All Time
+                        Whenever
                     </button>
                     <button
                         className={`time-range-tag ${selectedTimeRanges.includes('just_now') ? 'active' : ''}`}
@@ -1155,7 +1155,7 @@ const Dashboard = () => {
                             fontSize: '14px'
                         }}
                     >
-                        Within 12 Hours
+                        Just Now
                     </button>
                     <button
                         className={`time-range-tag ${selectedTimeRanges.includes('12_hours') ? 'active' : ''}`}
@@ -1172,7 +1172,7 @@ const Dashboard = () => {
                             fontSize: '14px'
                         }}
                     >
-                        12-24 Hours
+                        12 Hours
                     </button>
                     <button
                         className={`time-range-tag ${selectedTimeRanges.includes('24_hours') ? 'active' : ''}`}
@@ -1189,7 +1189,7 @@ const Dashboard = () => {
                             fontSize: '14px'
                         }}
                     >
-                        1-2 Days
+                        24 Hours
                     </button>
                     <button
                         className={`time-range-tag ${selectedTimeRanges.includes('3_days') ? 'active' : ''}`}
@@ -1206,7 +1206,7 @@ const Dashboard = () => {
                             fontSize: '14px'
                         }}
                     >
-                        2-3 Days
+                        3 Days
                     </button>
                 </div>
 
