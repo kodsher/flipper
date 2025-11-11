@@ -105,13 +105,8 @@ const Dashboard = () => {
                 const limitedX = Math.min(diffX, window.innerWidth);
                 e.currentTarget.style.transform = `translateX(${limitedX}px)`;
 
-                // Show swipe hint if swiped enough
-                if (diffX > 50) {
-                    e.currentTarget.classList.add('show-swipe-hint');
-                }
-            } else {
+                    } else {
                 e.currentTarget.style.transform = 'translateX(0)';
-                e.currentTarget.classList.remove('show-swipe-hint');
             }
         }
     };
@@ -151,9 +146,7 @@ const Dashboard = () => {
             row.style.transform = 'translateX(0)';
         }
 
-        // Hide swipe hint
-        row.classList.remove('show-swipe-hint');
-
+    
         // Clean up dataset
         delete row.dataset.startX;
         delete row.dataset.startY;
@@ -183,12 +176,8 @@ const Dashboard = () => {
             if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 15) {
                 if (diffX > 0) {
                     row.style.transform = `translateX(${diffX}px)`;
-                    if (diffX > 50) {
-                        row.classList.add('show-swipe-hint');
-                    }
                 } else {
                     row.style.transform = 'translateX(0)';
-                    row.classList.remove('show-swipe-hint');
                 }
             }
         };
@@ -214,7 +203,6 @@ const Dashboard = () => {
                 row.style.transform = 'translateX(0)';
             }
 
-            row.classList.remove('show-swipe-hint');
             delete row.dataset.startX;
             delete row.dataset.startY;
             delete row.dataset.listingId;

@@ -724,31 +724,7 @@ body.dark-mode .listings-table th[style*="cursor: pointer"]:hover {
     border: none;
 }
 
-/* Swipe hint indicator using pseudo-element */
-.listings-table tbody tr::after {
-    content: "Slide to hide →";
-    position: absolute;
-    right: -150px; /* Start hidden outside view */
-    top: 50%;
-    transform: translateY(-50%);
-    background: var(--error-bg);
-    color: var(--error-text);
-    padding: 8px 12px;
-    border-radius: 20px;
-    font-size: 0.8rem;
-    font-weight: 600;
-    opacity: 0;
-    transition: opacity 0.2s ease, right 0.2s ease;
-    pointer-events: none;
-    z-index: 10;
-    white-space: nowrap;
-}
-
-.listings-table tbody tr.swiping::after,
-.listings-table tbody tr.show-swipe-hint::after {
-    opacity: 1;
-    right: 10px;
-}
+/* Removed swipe hint indicator - clean swipe experience */
 
 .listings-table tbody tr:nth-child(even) {
     background-color: var(--bg-table-row-even);
