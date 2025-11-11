@@ -33,6 +33,120 @@ const Dashboard = () => {
     const [showHidden, setShowHidden] = useState(false);
     const [showFavorites, setShowFavorites] = useState(false);
 
+    // Dark mode state - enabled by default
+    const [darkMode, setDarkMode] = useState(() => {
+        // Check for saved preference or default to true (dark mode)
+        const savedTheme = localStorage.getItem('theme');
+        return savedTheme !== null ? savedTheme === 'dark' : true;
+    });
+
+    // Toggle theme function
+    const toggleTheme = () => {
+        const newDarkMode = !darkMode;
+        setDarkMode(newDarkMode);
+        localStorage.setItem('theme', newDarkMode ? 'dark' : 'light');
+
+        // Apply theme to body
+        if (newDarkMode) {
+            document.body.classList.add('dark-mode');
+        } else {
+            document.body.classList.remove('dark-mode');
+        }
+    };
+
+    // Apply theme on mount
+    useEffect(() => {
+        if (darkMode) {
+            document.body.classList.add('dark-mode');
+        } else {
+            document.body.classList.remove('dark-mode');
+        }
+    }, [darkMode]);
+
+    // Swipe handlers
+    const handleTouchStart = (e, listingId) => {
+        const touch = e.touches[0];
+        const row = e.currentTarget;
+
+        // Store initial touch data
+        row.dataset.startX = touch.clientX;
+        row.dataset.startY = touch.clientY;
+        row.dataset.listingId = listingId;
+        row.classList.add('swiping');
+
+        // Reset any previous animations
+        row.classList.remove('swiped-right');
+        row.style.transform = 'translateX(0)';
+    };
+
+    const handleTouchMove = (e) => {
+        if (!e.currentTarget.dataset.startX) return;
+
+        const touch = e.touches[0];
+        const startX = parseFloat(e.currentTarget.dataset.startX);
+        const startY = parseFloat(e.currentTarget.dataset.startY);
+        const currentX = touch.clientX;
+        const currentY = touch.clientY;
+        const diffX = currentX - startX;
+        const diffY = currentY - startY;
+
+        // Check if it's a horizontal swipe (more horizontal than vertical)
+        if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 10) {
+            e.preventDefault(); // Prevent vertical scroll
+
+            // Only allow right swipe (positive diffX)
+            if (diffX > 0) {
+                e.currentTarget.style.transform = `translateX(${diffX}px)`;
+
+                // Show swipe hint if swiped enough
+                if (diffX > 50) {
+                    const hint = e.currentTarget.querySelector('.swipe-hint');
+                    if (hint) hint.style.opacity = '1';
+                }
+            } else {
+                e.currentTarget.style.transform = 'translateX(0)';
+            }
+        }
+    };
+
+    const handleTouchEnd = (e) => {
+        const row = e.currentTarget;
+        const startX = parseFloat(row.dataset.startX);
+        const listingId = row.dataset.listingId;
+
+        if (!startX) return;
+
+        const touch = e.changedTouches[0];
+        const currentX = touch.clientX;
+        const diffX = currentX - startX;
+
+        // Reset swiping state
+        row.classList.remove('swiping');
+
+        // Check if it's a significant right swipe (more than 100px)
+        if (diffX > 100) {
+            // Hide the listing with animation
+            row.classList.add('swiped-right');
+
+            // Actually hide the listing after animation completes
+            setTimeout(() => {
+                toggleHideItem(listingId, false);
+            }, 300);
+        } else {
+            // Animate back to original position
+            row.style.transform = 'translateX(0)';
+        }
+
+        // Hide swipe hint
+        const hint = row.querySelector('.swipe-hint');
+        if (hint) hint.style.opacity = '0';
+
+        // Clean up dataset
+        delete row.dataset.startX;
+        delete row.dataset.startY;
+        delete row.dataset.listingId;
+    };
+
     // Calculate statistics from phone listings
     const calculateStats = useCallback(() => {
         if (phoneListings.length === 0) {
@@ -622,6 +736,14 @@ const Dashboard = () => {
         <div className="dashboard">
             <header className="dashboard-header">
                 <h1>📱 Dashboard</h1>
+                <button
+                    className="theme-toggle"
+                    onClick={toggleTheme}
+                    title={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+                >
+                    <span className="icon">{darkMode ? '☀️' : '🌙'}</span>
+                    <span>{darkMode ? 'Light' : 'Dark'}</span>
+                </button>
             </header>
 
             {error && (
@@ -1056,7 +1178,13 @@ const Dashboard = () => {
                             </thead>
                             <tbody>
                                 {filteredListings.map(listing => (
-                                    <tr key={listing.id}>
+                                    <tr
+                                        key={listing.id}
+                                        onTouchStart={(e) => handleTouchStart(e, listing.id)}
+                                        onTouchMove={handleTouchMove}
+                                        onTouchEnd={handleTouchEnd}
+                                    >
+                                        <div className="swipe-hint">Slide to hide</div>
                                         <td className="model-cell" style={{ width: '180px', maxWidth: '180px', display: 'none' }}>
                                             <div style={{
                                                 color: '#333',

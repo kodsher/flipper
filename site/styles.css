@@ -1,5 +1,82 @@
 /* Phone Flipping Dashboard Styles - Enhanced for Individual Listings */
 
+/* CSS Variables for Theme Support */
+:root {
+    /* Light Mode Colors */
+    --bg-primary: #f8f9fa;
+    --bg-secondary: white;
+    --bg-tertiary: #fafbfc;
+    --bg-hover: #f8f9fa;
+    --bg-table-row-even: #fafbfc;
+    --bg-table-row-hover: #f1f3f4;
+
+    --text-primary: #333;
+    --text-secondary: #666;
+    --text-muted: #666;
+    --text-link: #1877f2;
+    --text-white: white;
+
+    --border-color: #e9ecef;
+    --border-light: #f1f3f4;
+    --border-input: #e1e1e1;
+
+    --primary-color: #1877f2;
+    --primary-dark: #0c5bcc;
+    --primary-gradient: linear-gradient(135deg, #1877f2 0%, #0c5bcc 100%);
+
+    --success-bg: #d4edda;
+    --success-text: #155724;
+    --warning-bg: #fff3cd;
+    --warning-text: #856404;
+    --error-bg: #f8d7da;
+    --error-text: #721c24;
+
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.1);
+    --shadow-md: 0 12px 40px rgba(0, 0, 0, 0.15);
+    --shadow-lg: 0 4px 12px rgba(24, 119, 242, 0.3);
+
+    --filter-bg: #f8f9fa;
+    --filter-summary-bg: #e9ecef;
+}
+
+/* Dark Mode Colors */
+body.dark-mode {
+    --bg-primary: #0d1117;
+    --bg-secondary: #161b22;
+    --bg-tertiary: #1c2128;
+    --bg-hover: #21262d;
+    --bg-table-row-even: #161b22;
+    --bg-table-row-hover: #21262d;
+
+    --text-primary: #f0f6fc;
+    --text-secondary: #8b949e;
+    --text-muted: #656d76;
+    --text-link: #58a6ff;
+    --text-white: white;
+
+    --border-color: #30363d;
+    --border-light: #21262d;
+    --border-input: #30363d;
+
+    --primary-color: #58a6ff;
+    --primary-dark: #1f6feb;
+    --primary-gradient: linear-gradient(135deg, #58a6ff 0%, #1f6feb 100%);
+
+    --success-bg: #1a3f3f;
+    --success-text: #3fb950;
+    --warning-bg: #3d2f00;
+    --warning-text: #d29922;
+    --error-bg: #3d1616;
+    --error-text: #f85149;
+
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 12px 40px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 4px 12px rgba(88, 166, 255, 0.3);
+
+    --filter-bg: #1c2128;
+    --filter-summary-bg: #21262d;
+}
+
 * {
     margin: 0;
     padding: 0;
@@ -8,9 +85,10 @@
 
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: #f8f9fa;
+    background: var(--bg-primary);
     min-height: 100vh;
-    color: #333;
+    color: var(--text-primary);
+    transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 .dashboard {
@@ -21,18 +99,49 @@ body {
 
 /* Header */
 .dashboard-header {
-    background: white;
+    background: var(--bg-secondary);
     border-radius: 8px;
     padding: 15px;
     margin-bottom: 15px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--shadow-sm);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
 }
 
 .dashboard-header h1 {
     font-size: 1.5rem;
-    margin-bottom: 15px;
-    color: #333;
+    margin: 0;
+    color: var(--text-primary);
     text-align: center;
+    flex: 1;
+}
+
+/* Theme Toggle */
+.theme-toggle {
+    background: var(--bg-tertiary);
+    border: 2px solid var(--border-color);
+    border-radius: 50px;
+    padding: 8px 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9rem;
+    color: var(--text-primary);
+    transition: all 0.3s ease;
+    font-weight: 500;
+}
+
+.theme-toggle:hover {
+    background: var(--bg-hover);
+    border-color: var(--primary-color);
+    transform: translateY(-1px);
+}
+
+.theme-toggle .icon {
+    font-size: 1.1rem;
 }
 
 .status-bar {
@@ -49,22 +158,22 @@ body {
 }
 
 .connection-status.connecting {
-    background: #fff3cd;
-    color: #856404;
+    background: var(--warning-bg);
+    color: var(--warning-text);
 }
 
 .connection-status.connected {
-    background: #d4edda;
-    color: #155724;
+    background: var(--success-bg);
+    color: var(--success-text);
 }
 
 .connection-status.error {
-    background: #f8d7da;
-    color: #721c24;
+    background: var(--error-bg);
+    color: var(--error-text);
 }
 
 .last-updated {
-    color: #666;
+    color: var(--text-muted);
     font-size: 0.85rem;
 }
 
@@ -73,6 +182,13 @@ body {
     text-align: center;
     padding: 100px 20px;
     color: white;
+    background: #1877f2;
+    min-height: 100vh;
+    margin: -10px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
 }
 
 .loading-spinner {
@@ -101,9 +217,9 @@ body {
 
 /* Error Message */
 .error-message {
-    background: #f8d7da;
-    border: 1px solid #f5c6cb;
-    color: #721c24;
+    background: var(--error-bg);
+    border: 1px solid var(--error-text);
+    color: var(--error-text);
     padding: 20px;
     border-radius: 10px;
     margin-bottom: 30px;
@@ -116,16 +232,16 @@ body {
 
 /* Stats Section */
 .stats-section {
-    background: white;
+    background: var(--bg-secondary);
     border-radius: 8px;
     padding: 15px;
     margin-bottom: 15px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--shadow-sm);
 }
 
 .stats-section h2 {
     margin-bottom: 15px;
-    color: #333;
+    color: var(--text-primary);
     text-align: center;
     font-size: 1.4rem;
 }
@@ -137,22 +253,22 @@ body {
 }
 
 .stat-card {
-    background: #f8f9fa;
+    background: var(--filter-bg);
     padding: 15px;
     border-radius: 8px;
     text-align: center;
-    border: 1px solid #e9ecef;
+    border: 1px solid var(--border-color);
     transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 .stat-card:hover {
     transform: translateY(-5px);
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+    box-shadow: var(--shadow-md);
 }
 
 .stat-card h3 {
     font-size: 0.9rem;
-    color: #666;
+    color: var(--text-secondary);
     margin-bottom: 10px;
     text-transform: uppercase;
     letter-spacing: 1px;
@@ -161,29 +277,29 @@ body {
 .stat-value {
     font-size: 2rem;
     font-weight: bold;
-    color: #1877f2;
+    color: var(--primary-color);
     margin-bottom: 5px;
     word-break: break-word;
 }
 
 .stat-label {
     font-size: 0.85rem;
-    color: #666;
+    color: var(--text-secondary);
     opacity: 0.8;
 }
 
 /* Filters Section */
 .filters-section {
-    background: white;
+    background: var(--bg-secondary);
     border-radius: 8px;
     padding: 15px;
     margin-bottom: 15px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--shadow-sm);
 }
 
 .filters-section h2 {
     margin-bottom: 15px;
-    color: #333;
+    color: var(--text-primary);
     text-align: center;
     font-size: 1.5rem;
 }
@@ -202,7 +318,7 @@ body {
 
 .filter-group label {
     font-weight: 600;
-    color: #555;
+    color: var(--text-secondary);
     margin-bottom: 5px;
     font-size: 0.9rem;
 }
@@ -210,30 +326,32 @@ body {
 .filter-group select,
 .filter-group input {
     padding: 12px;
-    border: 2px solid #e1e1e1;
+    border: 2px solid var(--border-input);
     border-radius: 8px;
     font-size: 1rem;
     transition: border-color 0.3s ease;
-    background: white;
+    background: var(--bg-secondary);
+    color: var(--text-primary);
 }
 
 .filter-group select:focus,
 .filter-group input:focus {
     outline: none;
-    border-color: #1877f2;
-    box-shadow: 0 0 0 3px rgba(24, 119, 242, 0.1);
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.1);
 }
 
 .price-range-filter {
-    background: #f8f9fa;
+    background: var(--filter-bg);
     padding: 12px;
     border-radius: 10px;
     margin-bottom: 15px;
+    border: 1px solid var(--border-color);
 }
 
 .price-range-filter label {
     font-weight: 600;
-    color: #555;
+    color: var(--text-secondary);
     margin-bottom: 8px;
     display: block;
     font-size: 0.9rem;
@@ -260,24 +378,25 @@ body {
     width: 20px;
     height: 20px;
     border-radius: 50%;
-    background: #1877f2;
+    background: var(--primary-color);
     cursor: pointer;
     transition: background 0.3s ease;
 }
 
 .range-sliders input[type="range"]::-webkit-slider-thumb:hover {
-    background: #0c5bcc;
+    background: var(--primary-dark);
 }
 
 .filter-summary {
     text-align: center;
     font-size: 0.9rem;
-    color: #666;
+    color: var(--text-secondary);
     padding: 10px;
-    background: #e9ecef;
+    background: var(--filter-summary-bg);
     border-radius: 8px;
     font-weight: 500;
     margin-top: 10px;
+    border: 1px solid var(--border-color);
 }
 
 /* Tag-based Model Filtering */
@@ -298,9 +417,9 @@ body {
 }
 
 .model-tag.active, .generation-tag.active {
-    background: linear-gradient(135deg, #1877f2 0%, #0c5bcc 100%);
-    border-color: #1877f2;
-    box-shadow: 0 4px 12px rgba(24, 119, 242, 0.3);
+    background: var(--primary-gradient);
+    border-color: var(--primary-color);
+    box-shadow: var(--shadow-lg);
 }
 
 /* Clear Database Button */
@@ -335,7 +454,7 @@ body {
 
 .listings-section h2 {
     margin-bottom: 15px;
-    color: #333;
+    color: var(--text-primary);
     text-align: center;
     font-size: 1.4rem;
 }
@@ -343,7 +462,7 @@ body {
 .empty-state {
     text-align: center;
     padding: 60px 20px;
-    color: #666;
+    color: var(--text-secondary);
 }
 
 .empty-state h3 {
@@ -353,11 +472,11 @@ body {
 
 /* Table Container */
 .table-container {
-    background: white;
+    background: var(--bg-secondary);
     border-radius: 8px;
     overflow: hidden;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    border: 1px solid #e9ecef;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border-color);
 }
 
 .listings-table {
@@ -367,8 +486,8 @@ body {
 }
 
 .listings-table thead {
-    background: linear-gradient(135deg, #1877f2 0%, #0c5bcc 100%);
-    color: white;
+    background: var(--primary-gradient);
+    color: var(--text-white);
 }
 
 .listings-table th {
@@ -382,20 +501,67 @@ body {
 }
 
 .listings-table tbody tr {
-    border-bottom: 1px solid #f1f3f4;
+    border-bottom: 1px solid var(--border-light);
     transition: background-color 0.2s ease;
 }
 
 .listings-table tbody tr:hover {
-    background-color: #f8f9fa;
+    background-color: var(--bg-hover);
+}
+
+/* Swipe-to-hide functionality */
+.listings-table tbody tr {
+    position: relative;
+    touch-action: pan-y;
+    user-select: none;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.listings-table tbody tr.swiping {
+    transition: transform 0.1s ease-out;
+}
+
+.listings-table tbody tr.swiped-right {
+    transform: translateX(100%);
+    opacity: 0;
+    height: 0;
+    margin: 0;
+    padding: 0;
+}
+
+.listings-table tbody tr.swiped-right td {
+    padding: 0;
+    border: none;
+}
+
+/* Swipe hint indicator */
+.swipe-hint {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: var(--error-bg);
+    color: var(--error-text);
+    padding: 8px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    pointer-events: none;
+    z-index: 10;
+}
+
+.listings-table tbody tr.swiping .swipe-hint {
+    opacity: 1;
 }
 
 .listings-table tbody tr:nth-child(even) {
-    background-color: #fafbfc;
+    background-color: var(--bg-table-row-even);
 }
 
 .listings-table tbody tr:nth-child(even):hover {
-    background-color: #f1f3f4;
+    background-color: var(--bg-table-row-hover);
 }
 
 .listings-table td {
@@ -411,8 +577,8 @@ body {
 
 .model-badge {
     display: inline-block;
-    background: linear-gradient(135deg, #1877f2 0%, #0c5bcc 100%);
-    color: white;
+    background: var(--primary-gradient);
+    color: var(--text-white);
     padding: 4px 10px;
     border-radius: 15px;
     font-size: 0.75rem;
@@ -432,7 +598,7 @@ body {
 }
 
 .title-text {
-    color: #333;
+    color: var(--text-primary);
     font-size: 0.85rem;
     line-height: 1.4;
     white-space: pre-wrap;
@@ -443,7 +609,7 @@ body {
 }
 
 .title-link {
-    color: #1877f2;
+    color: var(--text-link);
     font-size: 0.85rem;
     line-height: 1.4;
     white-space: pre-wrap;
@@ -460,7 +626,7 @@ body {
 
 .price-value {
     font-weight: bold;
-    color: #1877f2;
+    color: var(--primary-color);
     font-size: 1rem;
     background: transparent;
     padding: 4px 8px;
@@ -470,20 +636,20 @@ body {
 
 .location-cell {
     min-width: 120px;
-    color: #666;
+    color: var(--text-secondary);
     font-size: 0.85rem;
 }
 
 .source-cell {
     min-width: 120px;
-    color: #666;
+    color: var(--text-secondary);
     font-size: 0.8rem;
     font-family: 'Courier New', monospace;
 }
 
 .detected-cell {
     min-width: 100px;
-    color: #666;
+    color: var(--text-secondary);
     font-size: 0.8rem;
 }
 
@@ -494,8 +660,8 @@ body {
 
 .view-link {
     display: inline-block;
-    background: linear-gradient(135deg, #1877f2 0%, #0c5bcc 100%);
-    color: white;
+    background: var(--primary-gradient);
+    color: var(--text-white);
     text-decoration: none;
     padding: 6px 12px;
     border-radius: 6px;
@@ -507,9 +673,9 @@ body {
 
 .view-link:hover {
     transform: translateY(-1px);
-    box-shadow: 0 3px 10px rgba(24, 119, 242, 0.3);
+    box-shadow: var(--shadow-lg);
     text-decoration: none;
-    color: white;
+    color: var(--text-white);
 }
 
 
