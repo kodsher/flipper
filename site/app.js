@@ -63,20 +63,24 @@ const Dashboard = () => {
         }
     }, [darkMode]);
 
-    // Swipe handlers
+    // Swipe handlers - improved for iOS/iPad
     const handleTouchStart = (e, listingId) => {
         const touch = e.touches[0];
         const row = e.currentTarget;
 
-        // Store initial touch data
-        row.dataset.startX = touch.clientX;
-        row.dataset.startY = touch.clientY;
+        // Store initial touch data with page coordinates for better iOS support
+        row.dataset.startX = touch.pageX.toString();
+        row.dataset.startY = touch.pageY.toString();
         row.dataset.listingId = listingId;
+        row.dataset.startTime = Date.now().toString();
         row.classList.add('swiping');
 
         // Reset any previous animations
         row.classList.remove('swiped-right');
         row.style.transform = 'translateX(0)';
+
+        // Prevent default to avoid iOS scrolling issues during swipe
+        e.preventDefault();
     };
 
     const handleTouchMove = (e) => {
@@ -85,18 +89,21 @@ const Dashboard = () => {
         const touch = e.touches[0];
         const startX = parseFloat(e.currentTarget.dataset.startX);
         const startY = parseFloat(e.currentTarget.dataset.startY);
-        const currentX = touch.clientX;
-        const currentY = touch.clientY;
+        const currentX = touch.pageX;
+        const currentY = touch.pageY;
         const diffX = currentX - startX;
         const diffY = currentY - startY;
 
         // Check if it's a horizontal swipe (more horizontal than vertical)
-        if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 10) {
-            e.preventDefault(); // Prevent vertical scroll
+        if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 15) {
+            // Prevent vertical scroll during horizontal swipe
+            e.preventDefault();
 
             // Only allow right swipe (positive diffX)
             if (diffX > 0) {
-                e.currentTarget.style.transform = `translateX(${diffX}px)`;
+                // Limit the transform to prevent over-swiping
+                const limitedX = Math.min(diffX, window.innerWidth);
+                e.currentTarget.style.transform = `translateX(${limitedX}px)`;
 
                 // Show swipe hint if swiped enough
                 if (diffX > 50) {
@@ -104,6 +111,7 @@ const Dashboard = () => {
                 }
             } else {
                 e.currentTarget.style.transform = 'translateX(0)';
+                e.currentTarget.classList.remove('show-swipe-hint');
             }
         }
     };
@@ -111,21 +119,28 @@ const Dashboard = () => {
     const handleTouchEnd = (e) => {
         const row = e.currentTarget;
         const startX = parseFloat(row.dataset.startX);
+        const startTime = parseFloat(row.dataset.startTime);
         const listingId = row.dataset.listingId;
 
-        if (!startX) return;
+        if (!startX || !startTime) return;
 
         const touch = e.changedTouches[0];
-        const currentX = touch.clientX;
+        const currentX = touch.pageX;
         const diffX = currentX - startX;
+        const timeDiff = Date.now() - startTime;
 
         // Reset swiping state
         row.classList.remove('swiping');
 
-        // Check if it's a significant right swipe (more than 100px)
-        if (diffX > 100) {
+        // Check if it's a significant right swipe (more than 80px or quick swipe)
+        if ((diffX > 80) || (diffX > 40 && timeDiff < 300)) {
             // Hide the listing with animation
             row.classList.add('swiped-right');
+
+            // Provide haptic feedback if available (iOS)
+            if (navigator.vibrate) {
+                navigator.vibrate(50);
+            }
 
             // Actually hide the listing after animation completes
             setTimeout(() => {
@@ -143,6 +158,71 @@ const Dashboard = () => {
         delete row.dataset.startX;
         delete row.dataset.startY;
         delete row.dataset.listingId;
+        delete row.dataset.startTime;
+    };
+
+    // Also handle mouse events for desktop testing
+    const handleMouseDown = (e, listingId) => {
+        const row = e.currentTarget;
+        row.dataset.startX = e.clientX.toString();
+        row.dataset.startY = e.clientY.toString();
+        row.dataset.listingId = listingId;
+        row.dataset.startTime = Date.now().toString();
+        row.classList.add('swiping');
+        row.style.transform = 'translateX(0)';
+
+        // Add mouse move and up listeners
+        const handleMouseMove = (e) => {
+            if (!row.dataset.startX) return;
+
+            const startX = parseFloat(row.dataset.startX);
+            const startY = parseFloat(row.dataset.startY);
+            const diffX = e.clientX - startX;
+            const diffY = e.clientY - startY;
+
+            if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 15) {
+                if (diffX > 0) {
+                    row.style.transform = `translateX(${diffX}px)`;
+                    if (diffX > 50) {
+                        row.classList.add('show-swipe-hint');
+                    }
+                } else {
+                    row.style.transform = 'translateX(0)';
+                    row.classList.remove('show-swipe-hint');
+                }
+            }
+        };
+
+        const handleMouseUp = (e) => {
+            document.removeEventListener('mousemove', handleMouseMove);
+            document.removeEventListener('mouseup', handleMouseUp);
+
+            const startX = parseFloat(row.dataset.startX);
+            const startTime = parseFloat(row.dataset.startTime);
+            const listingId = row.dataset.listingId;
+            const diffX = e.clientX - startX;
+            const timeDiff = Date.now() - startTime;
+
+            row.classList.remove('swiping');
+
+            if ((diffX > 80) || (diffX > 40 && timeDiff < 300)) {
+                row.classList.add('swiped-right');
+                setTimeout(() => {
+                    toggleHideItem(listingId, false);
+                }, 300);
+            } else {
+                row.style.transform = 'translateX(0)';
+            }
+
+            row.classList.remove('show-swipe-hint');
+            delete row.dataset.startX;
+            delete row.dataset.startY;
+            delete row.dataset.listingId;
+            delete row.dataset.startTime;
+        };
+
+        document.addEventListener('mousemove', handleMouseMove);
+        document.addEventListener('mouseup', handleMouseUp);
     };
 
     // Calculate statistics from phone listings
@@ -1181,6 +1261,8 @@ const Dashboard = () => {
                                         onTouchStart={(e) => handleTouchStart(e, listing.id)}
                                         onTouchMove={handleTouchMove}
                                         onTouchEnd={handleTouchEnd}
+                                        onMouseDown={(e) => handleMouseDown(e, listing.id)}
+                                        style={{ cursor: 'grab' }}
                                     >
                                         <td className="model-cell" style={{ width: '180px', maxWidth: '180px', display: 'none' }}>
                                             <div style={{

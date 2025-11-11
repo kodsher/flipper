@@ -689,16 +689,25 @@ body.dark-mode .listings-table th[style*="cursor: pointer"]:hover {
     background-color: var(--bg-hover);
 }
 
-/* Swipe-to-hide functionality */
+/* Swipe-to-hide functionality - improved for iOS */
 .listings-table tbody tr {
     position: relative;
     touch-action: pan-y;
     user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+    -webkit-tap-highlight-color: transparent;
     transition: transform 0.3s ease, opacity 0.3s ease;
+    cursor: grab;
+}
+
+.listings-table tbody tr:active {
+    cursor: grabbing;
 }
 
 .listings-table tbody tr.swiping {
     transition: transform 0.1s ease-out;
+    z-index: 10;
 }
 
 .listings-table tbody tr.swiped-right {
@@ -707,6 +716,7 @@ body.dark-mode .listings-table th[style*="cursor: pointer"]:hover {
     height: 0;
     margin: 0;
     padding: 0;
+    pointer-events: none;
 }
 
 .listings-table tbody tr.swiped-right td {
