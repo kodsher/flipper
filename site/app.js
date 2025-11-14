@@ -34,35 +34,16 @@ const Dashboard = () => {
     const [showHidden, setShowHidden] = useState(false);
     const [showFavorites, setShowFavorites] = useState(false);
 
-    // Dark mode state - enabled by default
-    const [darkMode, setDarkMode] = useState(() => {
-        // Check for saved preference or default to true (dark mode)
-        const savedTheme = localStorage.getItem('theme');
-        return savedTheme !== null ? savedTheme === 'dark' : true;
-    });
-
-    // Toggle theme function
-    const toggleTheme = () => {
-        const newDarkMode = !darkMode;
-        setDarkMode(newDarkMode);
-        localStorage.setItem('theme', newDarkMode ? 'dark' : 'light');
-
-        // Apply theme to body
-        if (newDarkMode) {
-            document.body.classList.add('dark-mode');
-        } else {
-            document.body.classList.remove('dark-mode');
-        }
-    };
-
-    // Apply theme on mount
+    // Always dark mode
     useEffect(() => {
-        if (darkMode) {
-            document.body.classList.add('dark-mode');
-        } else {
-            document.body.classList.remove('dark-mode');
-        }
-    }, [darkMode]);
+        // Add dark mode class to both html and body
+        document.documentElement.classList.add('dark-mode');
+        document.body.classList.add('dark-mode');
+
+        // Also set a fallback background color
+        document.body.style.backgroundColor = '#0d1117';
+        document.body.style.color = '#f0f6fc';
+    }, []);
 
     // Swipe handlers - improved for iOS/iPad
     const handleTouchStart = (e, listingId) => {
@@ -450,6 +431,89 @@ const Dashboard = () => {
         }
     };
 
+    // Function to delete only currently displayed listings
+    const deleteVisibleListings = async () => {
+        const currentListings = getFilteredListings();
+
+        if (currentListings.length === 0) {
+            console.log('No listings to delete.');
+            return;
+        }
+
+        // Confirmation dialog
+        const isConfirmed = window.confirm(
+            `⚠️ Are you sure you want to delete ${currentListings.length} currently displayed listings?\n\n` +
+            "This action will delete only the listings that are currently visible based on your filters.\n\n" +
+            "This cannot be undone!"
+        );
+
+        if (!isConfirmed) return;
+
+        try {
+            // Show loading state
+            const clearButton = document.getElementById('clear-database-btn');
+            if (clearButton) {
+                clearButton.disabled = true;
+                clearButton.textContent = `🗑️ Deleting 0/${currentListings.length}...`;
+            }
+
+            console.log(`🗑️ Deleting ${currentListings.length} visible listings from Firebase...`);
+
+            // Delete items in batches to avoid overwhelming Firebase
+            const batchSize = 10;
+            let deletedCount = 0;
+
+            for (let i = 0; i < currentListings.length; i += batchSize) {
+                const batch = currentListings.slice(i, i + batchSize);
+
+                // Update button progress
+                if (clearButton) {
+                    clearButton.textContent = `🗑️ Deleting ${deletedCount}/${currentListings.length}...`;
+                }
+
+                // Delete this batch
+                const deletePromises = batch.map(listing => {
+                    const listingRef = firebase.database().ref(`phone_listings/${listing.id}`);
+                    return listingRef.remove();
+                });
+
+                await Promise.all(deletePromises);
+                deletedCount += batch.length;
+
+                // Small delay between batches to prevent overwhelming
+                if (i + batchSize < currentListings.length) {
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                }
+            }
+
+            console.log(`✅ ${currentListings.length} listings deleted from Firebase`);
+
+            // Reset button
+            if (clearButton) {
+                clearButton.disabled = false;
+                clearButton.textContent = `🗑️ Delete ${filteredListings.length - currentListings.length}`;
+            }
+
+            // Show success message
+            console.log(`✅ Successfully deleted ${currentListings.length} listings!`);
+
+            // Update local state immediately for smooth UX
+            const deletedIds = new Set(currentListings.map(l => l.id));
+            setPhoneListings(prev => prev.filter(listing => !deletedIds.has(listing.id)));
+
+        } catch (error) {
+            console.error('❌ Error deleting listings:', error);
+            console.error('❌ Failed to delete listings. Please try again.');
+
+            // Reset button on error
+            const clearButton = document.getElementById('clear-database-btn');
+            if (clearButton) {
+                clearButton.disabled = false;
+                clearButton.textContent = `🗑️ Delete ${filteredListings.length}`;
+            }
+        }
+    };
+
     // Function to clear all data from database and push to GitHub
     const clearDatabaseAndPushToGitHub = async () => {
         // Confirmation dialog with expanded information
@@ -487,22 +551,20 @@ const Dashboard = () => {
             console.log('✅ All data cleared from Firebase');
             console.log('📤 Pushing changes to GitHub...');
 
-            // Show success message with Firebase console links
-            alert(
-                '✅ Database cleared successfully!\n\n' +
-                'All phone listings and processed hashes have been deleted from Firebase.\n\n' +
-                '🔗 Firebase Console Links:\n' +
-                '• Main Database: https://console.firebase.google.com/project/phone-flipping/database/phone-flipping-default-rtdb/data/~2Fphone_listings\n' +
-                '• CSV Monitor: https://console.firebase.google.com/project/phone-flipping/database/phone-flipping-default-rtdb/data/~2Fprocessed_hashes\n\n' +
-                'Note: GitHub integration requires backend setup.'
-            );
+            // Success message logged to console
+            console.log('✅ Database cleared successfully!');
+            console.log('All phone listings and processed hashes have been deleted from Firebase.');
+            console.log('🔗 Firebase Console Links:');
+            console.log('• Main Database: https://console.firebase.google.com/project/phone-flipping/database/phone-flipping-default-rtdb/data/~2Fphone_listings');
+            console.log('• CSV Monitor: https://console.firebase.google.com/project/phone-flipping/database/phone-flipping-default-rtdb/data/~2Fprocessed_hashes');
+            console.log('Note: GitHub integration requires backend setup.');
 
             // Refresh data
             fetchData();
 
         } catch (error) {
             console.error('❌ Error clearing database:', error);
-            alert('❌ Failed to clear database. Please try again.');
+            console.error('❌ Failed to clear database. Please try again.');
         } finally {
             // Reset button state
             const clearButton = document.getElementById('clear-database-btn');
@@ -858,14 +920,6 @@ const Dashboard = () => {
         <div className="dashboard">
             <header className="dashboard-header">
                 <h1>📱 Dashboard</h1>
-                <button
-                    className="theme-toggle"
-                    onClick={toggleTheme}
-                    title={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
-                >
-                    <span className="icon">{darkMode ? '☀️' : '🌙'}</span>
-                    <span>{darkMode ? 'Light' : 'Dark'}</span>
-                </button>
             </header>
 
             {error && (
@@ -877,34 +931,76 @@ const Dashboard = () => {
 
             
             <section className="filters-section">
-                <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginBottom: '15px' }}>
-                    <button
-                        id="clear-database-btn"
-                        onClick={clearDatabaseAndPushToGitHub}
-                        style={{
-                            background: 'transparent',
-                            color: '#1877f2',
-                            border: '2px solid #1877f2',
-                            padding: '8px 16px',
-                            borderRadius: '6px',
-                            fontWeight: '600',
-                            cursor: 'pointer',
-                            transition: 'all 0.3s ease',
-                            fontSize: '0.9rem'
-                        }}
-                        onMouseOver={(e) => {
-                            e.target.style.background = '#1877f2';
-                            e.target.style.color = 'white';
-                            e.target.style.transform = 'translateY(-1px)';
-                        }}
-                        onMouseOut={(e) => {
-                            e.target.style.background = 'transparent';
-                            e.target.style.color = '#1877f2';
-                            e.target.style.transform = 'translateY(0)';
-                        }}
-                    >
-                        🗑️
-                    </button>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+                    {/* Results count display */}
+                    <div style={{
+                        fontSize: '0.9rem',
+                        color: '#8b949e',
+                        fontWeight: '500'
+                    }}>
+                        Showing {filteredListings.length} results
+                    </div>
+
+                    {/* Delete buttons */}
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                        <button
+                            id="clear-database-btn"
+                            onClick={deleteVisibleListings}
+                            style={{
+                                background: 'transparent',
+                                color: '#ff4444',
+                                border: '2px solid #ff4444',
+                                padding: '8px 16px',
+                                borderRadius: '6px',
+                                fontWeight: '600',
+                                cursor: 'pointer',
+                                transition: 'all 0.3s ease',
+                                fontSize: '0.9rem'
+                            }}
+                            onMouseOver={(e) => {
+                                e.target.style.background = '#ff4444';
+                                e.target.style.color = 'white';
+                                e.target.style.transform = 'translateY(-1px)';
+                            }}
+                            onMouseOut={(e) => {
+                                e.target.style.background = 'transparent';
+                                e.target.style.color = '#ff4444';
+                                e.target.style.transform = 'translateY(0)';
+                            }}
+                            title="Delete currently visible listings"
+                        >
+                            🗑️ Delete {filteredListings.length}
+                        </button>
+
+                        <button
+                            id="clear-all-database-btn"
+                            onClick={clearDatabaseAndPushToGitHub}
+                            style={{
+                                background: 'transparent',
+                                color: '#1877f2',
+                                border: '2px solid #1877f2',
+                                padding: '8px 16px',
+                                borderRadius: '6px',
+                                fontWeight: '600',
+                                cursor: 'pointer',
+                                transition: 'all 0.3s ease',
+                                fontSize: '0.9rem'
+                            }}
+                            onMouseOver={(e) => {
+                                e.target.style.background = '#1877f2';
+                                e.target.style.color = 'white';
+                                e.target.style.transform = 'translateY(-1px)';
+                            }}
+                            onMouseOut={(e) => {
+                                e.target.style.background = 'transparent';
+                                e.target.style.color = '#1877f2';
+                                e.target.style.transform = 'translateY(0)';
+                            }}
+                            title="Delete ALL listings from database"
+                        >
+                            🗑️ Clear All
+                        </button>
+                    </div>
                 </div>
 
                 {/* Device Category Tags */}
@@ -913,8 +1009,8 @@ const Dashboard = () => {
                         className={`model-tag ${selectedModels.includes('all') ? 'active' : ''}`}
                         onClick={() => toggleModel('all')}
                         style={{
-                            background: selectedModels.includes('all') ? '#1877f2' : '#f8f9fa',
-                            color: selectedModels.includes('all') ? 'white' : '#333',
+                            background: selectedModels.includes('all') ? '#1877f2' : '#1c2128',
+                            color: selectedModels.includes('all') ? 'white' : '#f0f6fc',
                             border: '2px solid #e1e1e1',
                             padding: '8px 16px',
                             borderRadius: '20px',
@@ -929,8 +1025,8 @@ const Dashboard = () => {
                         className={`model-tag ${selectedModels.includes('iphone') ? 'active' : ''}`}
                         onClick={() => toggleModel('iphone')}
                         style={{
-                            background: selectedModels.includes('iphone') ? '#1877f2' : '#f8f9fa',
-                            color: selectedModels.includes('iphone') ? 'white' : '#333',
+                            background: selectedModels.includes('iphone') ? '#1877f2' : '#1c2128',
+                            color: selectedModels.includes('iphone') ? 'white' : '#f0f6fc',
                             border: '2px solid #e1e1e1',
                             padding: '8px 16px',
                             borderRadius: '20px',
@@ -945,8 +1041,8 @@ const Dashboard = () => {
                         className={`model-tag ${selectedModels.includes('ipad') ? 'active' : ''}`}
                         onClick={() => toggleModel('ipad')}
                         style={{
-                            background: selectedModels.includes('ipad') ? '#1877f2' : '#f8f9fa',
-                            color: selectedModels.includes('ipad') ? 'white' : '#333',
+                            background: selectedModels.includes('ipad') ? '#1877f2' : '#1c2128',
+                            color: selectedModels.includes('ipad') ? 'white' : '#f0f6fc',
                             border: '2px solid #e1e1e1',
                             padding: '8px 16px',
                             borderRadius: '20px',
@@ -961,8 +1057,8 @@ const Dashboard = () => {
                         className={`model-tag ${selectedModels.includes('macbook') ? 'active' : ''}`}
                         onClick={() => toggleModel('macbook')}
                         style={{
-                            background: selectedModels.includes('macbook') ? '#1877f2' : '#f8f9fa',
-                            color: selectedModels.includes('macbook') ? 'white' : '#333',
+                            background: selectedModels.includes('macbook') ? '#1877f2' : '#1c2128',
+                            color: selectedModels.includes('macbook') ? 'white' : '#f0f6fc',
                             border: '2px solid #e1e1e1',
                             padding: '8px 16px',
                             borderRadius: '20px',
@@ -977,8 +1073,8 @@ const Dashboard = () => {
                         className={`model-tag ${selectedModels.includes('android') ? 'active' : ''}`}
                         onClick={() => toggleModel('android')}
                         style={{
-                            background: selectedModels.includes('android') ? '#1877f2' : '#f8f9fa',
-                            color: selectedModels.includes('android') ? 'white' : '#333',
+                            background: selectedModels.includes('android') ? '#1877f2' : '#1c2128',
+                            color: selectedModels.includes('android') ? 'white' : '#f0f6fc',
                             border: '2px solid #e1e1e1',
                             padding: '8px 16px',
                             borderRadius: '20px',
@@ -993,8 +1089,8 @@ const Dashboard = () => {
                         className={`model-tag ${selectedModels.includes('android_tablet') ? 'active' : ''}`}
                         onClick={() => toggleModel('android_tablet')}
                         style={{
-                            background: selectedModels.includes('android_tablet') ? '#1877f2' : '#f8f9fa',
-                            color: selectedModels.includes('android_tablet') ? 'white' : '#333',
+                            background: selectedModels.includes('android_tablet') ? '#1877f2' : '#1c2128',
+                            color: selectedModels.includes('android_tablet') ? 'white' : '#f0f6fc',
                             border: '2px solid #e1e1e1',
                             padding: '8px 16px',
                             borderRadius: '20px',
@@ -1009,8 +1105,8 @@ const Dashboard = () => {
                         className={`model-tag ${selectedModels.includes('other_computers') ? 'active' : ''}`}
                         onClick={() => toggleModel('other_computers')}
                         style={{
-                            background: selectedModels.includes('other_computers') ? '#1877f2' : '#f8f9fa',
-                            color: selectedModels.includes('other_computers') ? 'white' : '#333',
+                            background: selectedModels.includes('other_computers') ? '#1877f2' : '#1c2128',
+                            color: selectedModels.includes('other_computers') ? 'white' : '#f0f6fc',
                             border: '2px solid #e1e1e1',
                             padding: '8px 16px',
                             borderRadius: '20px',
@@ -1025,8 +1121,8 @@ const Dashboard = () => {
                         className={`model-tag ${selectedModels.includes('other') ? 'active' : ''}`}
                         onClick={() => toggleModel('other')}
                         style={{
-                            background: selectedModels.includes('other') ? '#1877f2' : '#f8f9fa',
-                            color: selectedModels.includes('other') ? 'white' : '#333',
+                            background: selectedModels.includes('other') ? '#1877f2' : '#1c2128',
+                            color: selectedModels.includes('other') ? 'white' : '#f0f6fc',
                             border: '2px solid #e1e1e1',
                             padding: '8px 16px',
                             borderRadius: '20px',
@@ -1046,8 +1142,8 @@ const Dashboard = () => {
                             className={`generation-tag ${selectedGenerations.includes('all') ? 'active' : ''}`}
                             onClick={() => toggleGeneration('all')}
                             style={{
-                                background: selectedGenerations.includes('all') ? '#1877f2' : '#f8f9fa',
-                                color: selectedGenerations.includes('all') ? 'white' : '#333',
+                                background: selectedGenerations.includes('all') ? '#1877f2' : '#1c2128',
+                                color: selectedGenerations.includes('all') ? 'white' : '#f0f6fc',
                                 border: '2px solid #e1e1e1',
                                 padding: '8px 16px',
                                 borderRadius: '20px',
@@ -1064,8 +1160,8 @@ const Dashboard = () => {
                                 className={`generation-tag ${selectedGenerations.includes(gen) ? 'active' : ''}`}
                                 onClick={() => toggleGeneration(gen)}
                                 style={{
-                                    background: selectedGenerations.includes(gen) ? '#1877f2' : '#f8f9fa',
-                                    color: selectedGenerations.includes(gen) ? 'white' : '#333',
+                                    background: selectedGenerations.includes(gen) ? '#1877f2' : '#1c2128',
+                                    color: selectedGenerations.includes(gen) ? 'white' : '#f0f6fc',
                                     border: '2px solid #e1e1e1',
                                     padding: '8px 16px',
                                     borderRadius: '20px',
@@ -1086,8 +1182,8 @@ const Dashboard = () => {
                         className={`search-city-tag ${selectedSearchCities.includes('all') ? 'active' : ''}`}
                         onClick={() => toggleSearchCity('all')}
                         style={{
-                            background: selectedSearchCities.includes('all') ? '#1877f2' : '#f8f9fa',
-                            color: selectedSearchCities.includes('all') ? 'white' : '#333',
+                            background: selectedSearchCities.includes('all') ? '#1877f2' : '#1c2128',
+                            color: selectedSearchCities.includes('all') ? 'white' : '#f0f6fc',
                             border: '2px solid #e1e1e1',
                             padding: '8px 16px',
                             borderRadius: '20px',
@@ -1105,8 +1201,8 @@ const Dashboard = () => {
                             className={`search-city-tag ${selectedSearchCities.includes(searchCity) ? 'active' : ''}`}
                             onClick={() => toggleSearchCity(searchCity)}
                             style={{
-                                background: selectedSearchCities.includes(searchCity) ? '#1877f2' : '#f8f9fa',
-                                color: selectedSearchCities.includes(searchCity) ? 'white' : '#333',
+                                background: selectedSearchCities.includes(searchCity) ? '#1877f2' : '#1c2128',
+                                color: selectedSearchCities.includes(searchCity) ? 'white' : '#f0f6fc',
                                 border: '2px solid #e1e1e1',
                                 padding: '8px 16px',
                                 borderRadius: '20px',
@@ -1127,8 +1223,8 @@ const Dashboard = () => {
                         className={`time-range-tag ${selectedTimeRanges.includes('all') ? 'active' : ''}`}
                         onClick={() => toggleTimeRange('all')}
                         style={{
-                            background: selectedTimeRanges.includes('all') ? '#1877f2' : '#f8f9fa',
-                            color: selectedTimeRanges.includes('all') ? 'white' : '#333',
+                            background: selectedTimeRanges.includes('all') ? '#1877f2' : '#1c2128',
+                            color: selectedTimeRanges.includes('all') ? 'white' : '#f0f6fc',
                             border: '2px solid #e1e1e1',
                             padding: '8px 16px',
                             borderRadius: '20px',
@@ -1144,8 +1240,8 @@ const Dashboard = () => {
                         className={`time-range-tag ${selectedTimeRanges.includes('just_now') ? 'active' : ''}`}
                         onClick={() => toggleTimeRange('just_now')}
                         style={{
-                            background: selectedTimeRanges.includes('just_now') ? '#1877f2' : '#f8f9fa',
-                            color: selectedTimeRanges.includes('just_now') ? 'white' : '#333',
+                            background: selectedTimeRanges.includes('just_now') ? '#1877f2' : '#1c2128',
+                            color: selectedTimeRanges.includes('just_now') ? 'white' : '#f0f6fc',
                             border: '2px solid #e1e1e1',
                             padding: '8px 16px',
                             borderRadius: '20px',
@@ -1161,8 +1257,8 @@ const Dashboard = () => {
                         className={`time-range-tag ${selectedTimeRanges.includes('12_hours') ? 'active' : ''}`}
                         onClick={() => toggleTimeRange('12_hours')}
                         style={{
-                            background: selectedTimeRanges.includes('12_hours') ? '#1877f2' : '#f8f9fa',
-                            color: selectedTimeRanges.includes('12_hours') ? 'white' : '#333',
+                            background: selectedTimeRanges.includes('12_hours') ? '#1877f2' : '#1c2128',
+                            color: selectedTimeRanges.includes('12_hours') ? 'white' : '#f0f6fc',
                             border: '2px solid #e1e1e1',
                             padding: '8px 16px',
                             borderRadius: '20px',
@@ -1178,8 +1274,8 @@ const Dashboard = () => {
                         className={`time-range-tag ${selectedTimeRanges.includes('24_hours') ? 'active' : ''}`}
                         onClick={() => toggleTimeRange('24_hours')}
                         style={{
-                            background: selectedTimeRanges.includes('24_hours') ? '#1877f2' : '#f8f9fa',
-                            color: selectedTimeRanges.includes('24_hours') ? 'white' : '#333',
+                            background: selectedTimeRanges.includes('24_hours') ? '#1877f2' : '#1c2128',
+                            color: selectedTimeRanges.includes('24_hours') ? 'white' : '#f0f6fc',
                             border: '2px solid #e1e1e1',
                             padding: '8px 16px',
                             borderRadius: '20px',
@@ -1195,8 +1291,8 @@ const Dashboard = () => {
                         className={`time-range-tag ${selectedTimeRanges.includes('3_days') ? 'active' : ''}`}
                         onClick={() => toggleTimeRange('3_days')}
                         style={{
-                            background: selectedTimeRanges.includes('3_days') ? '#1877f2' : '#f8f9fa',
-                            color: selectedTimeRanges.includes('3_days') ? 'white' : '#333',
+                            background: selectedTimeRanges.includes('3_days') ? '#1877f2' : '#1c2128',
+                            color: selectedTimeRanges.includes('3_days') ? 'white' : '#f0f6fc',
                             border: '2px solid #e1e1e1',
                             padding: '8px 16px',
                             borderRadius: '20px',
@@ -1224,7 +1320,7 @@ const Dashboard = () => {
                             borderRadius: '8px',
                             fontSize: '1rem',
                             transition: 'border-color 0.3s ease',
-                            background: 'white'
+                            background: '#161b22'
                         }}
                         onFocus={(e) => e.target.style.borderColor = '#1877f2'}
                         onBlur={(e) => e.target.style.borderColor = '#e1e1e1'}
@@ -1268,8 +1364,8 @@ const Dashboard = () => {
                     <button
                         onClick={() => setShowHidden(!showHidden)}
                         style={{
-                            background: showHidden ? '#1877f2' : '#f8f9fa',
-                            color: showHidden ? 'white' : '#333',
+                            background: showHidden ? '#1877f2' : '#1c2128',
+                            color: showHidden ? 'white' : '#f0f6fc',
                             border: '2px solid #e1e1e1',
                             padding: '10px',
                             borderRadius: '50%',
@@ -1290,8 +1386,8 @@ const Dashboard = () => {
                     <button
                         onClick={() => setShowFavorites(!showFavorites)}
                         style={{
-                            background: showFavorites ? '#ffc107' : '#f8f9fa',
-                            color: showFavorites ? '#333' : '#333',
+                            background: showFavorites ? '#ffc107' : '#1c2128',
+                            color: showFavorites ? '#f0f6fc' : '#f0f6fc',
                             border: '2px solid #e1e1e1',
                             padding: '10px',
                             borderRadius: '50%',
@@ -1399,7 +1495,7 @@ const Dashboard = () => {
                                     >
                                         <td className="model-cell" style={{ width: '180px', maxWidth: '180px', display: 'none' }}>
                                             <div style={{
-                                                color: '#333',
+                                                color: '#f0f6fc',
                                                 fontSize: '0.85rem',
                                                 lineHeight: '1.3',
                                                 overflow: 'hidden',
@@ -1461,8 +1557,8 @@ const Dashboard = () => {
                                             <button
                                                 onClick={() => favoriteItem(listing.id)}
                                                 style={{
-                                                    background: listing.favorited ? '#ffc107' : '#f8f9fa',
-                                                    color: listing.favorited ? '#333' : '#666',
+                                                    background: listing.favorited ? '#ffc107' : '#1c2128',
+                                                    color: listing.favorited ? '#f0f6fc' : '#666',
                                                     border: '1px solid #e1e1e1',
                                                     borderRadius: '4px',
                                                     padding: '4px 8px',
@@ -1478,7 +1574,7 @@ const Dashboard = () => {
                                             <button
                                                 onClick={() => toggleHideItem(listing.id, listing.hidden)}
                                                 style={{
-                                                    background: listing.hidden ? '#1877f2' : '#f8f9fa',
+                                                    background: listing.hidden ? '#1877f2' : '#1c2128',
                                                     color: listing.hidden ? 'white' : '#666',
                                                     border: '1px solid #e1e1e1',
                                                     borderRadius: '4px',

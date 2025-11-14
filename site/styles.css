@@ -1,46 +1,8 @@
 /* Phone Flipping Dashboard Styles - Enhanced for Individual Listings */
 
-/* CSS Variables for Theme Support */
+/* CSS Variables for Theme Support - Dark Mode Default */
 :root {
-    /* Light Mode Colors */
-    --bg-primary: #f8f9fa;
-    --bg-secondary: white;
-    --bg-tertiary: #fafbfc;
-    --bg-hover: #f8f9fa;
-    --bg-table-row-even: #fafbfc;
-    --bg-table-row-hover: #f1f3f4;
-
-    --text-primary: #333;
-    --text-secondary: #666;
-    --text-muted: #666;
-    --text-link: #1877f2;
-    --text-white: white;
-
-    --border-color: #e9ecef;
-    --border-light: #f1f3f4;
-    --border-input: #e1e1e1;
-
-    --primary-color: #1877f2;
-    --primary-dark: #0c5bcc;
-    --primary-gradient: linear-gradient(135deg, #1877f2 0%, #0c5bcc 100%);
-
-    --success-bg: #d4edda;
-    --success-text: #155724;
-    --warning-bg: #fff3cd;
-    --warning-text: #856404;
-    --error-bg: #f8d7da;
-    --error-text: #721c24;
-
-    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.1);
-    --shadow-md: 0 12px 40px rgba(0, 0, 0, 0.15);
-    --shadow-lg: 0 4px 12px rgba(24, 119, 242, 0.3);
-
-    --filter-bg: #f8f9fa;
-    --filter-summary-bg: #e9ecef;
-}
-
-/* Dark Mode Colors */
-body.dark-mode {
+    /* Dark Mode Colors */
     --bg-primary: #0d1117;
     --bg-secondary: #161b22;
     --bg-tertiary: #1c2128;
@@ -77,6 +39,8 @@ body.dark-mode {
     --filter-summary-bg: #21262d;
 }
 
+/* Dark mode is now default - no need for body.dark-mode class */
+
 * {
     margin: 0;
     padding: 0;
@@ -85,8 +49,10 @@ body.dark-mode {
 
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: #0d1117;
     background: var(--bg-primary);
     min-height: 100vh;
+    color: #f0f6fc;
     color: var(--text-primary);
     transition: background-color 0.3s ease, color 0.3s ease;
 }
