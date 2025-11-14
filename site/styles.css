@@ -555,6 +555,239 @@ body.dark-mode input[type="range"] {
     box-shadow: var(--shadow-lg);
 }
 
+/* Price Range Edit Feature for Generation Tags */
+.generation-tag {
+    position: relative;
+    overflow: visible;
+}
+
+.generation-tag .edit-pencil {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background: transparent;
+    color: #1877f2;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    cursor: pointer;
+    z-index: 10;
+    box-shadow: none;
+    transition: all 0.3s ease;
+    border: 2px solid #1877f2;
+}
+
+.generation-tag:hover .edit-pencil {
+    display: flex;
+}
+
+.generation-tag .edit-pencil:hover {
+    transform: scale(1.1);
+    border-color: #1f6feb;
+    color: #1f6feb;
+}
+
+/* Price Range Popup Overlay */
+.price-range-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+}
+
+.price-range-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.price-range-modal {
+    background: var(--bg-secondary);
+    border-radius: 16px;
+    padding: 24px;
+    max-width: 250px;
+    width: 90%;
+    box-shadow: var(--shadow-md);
+    border: 1px solid var(--border-color);
+    transform: scale(0.9) translateY(20px);
+    transition: all 0.3s ease;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.price-range-overlay.active .price-range-modal {
+    transform: scale(1) translateY(0);
+}
+
+.price-range-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.price-range-title {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.price-range-subtitle {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin-top: 8px;
+}
+
+.close-button {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 24px;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+}
+
+.close-button:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+    transform: scale(1.1);
+}
+
+.price-range-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.form-group label {
+    font-weight: 600;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.price-inputs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.price-input {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.price-input input {
+    padding: 12px 16px;
+    border: 2px solid var(--border-input);
+    border-radius: 8px;
+    font-size: 1rem;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    transition: all 0.2s ease;
+}
+
+.price-input input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.1);
+}
+
+.form-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+    margin-top: 16px;
+}
+
+.btn-save, .btn-cancel {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 0.85rem;
+}
+
+.btn-save {
+    background: var(--primary-color);
+    color: white;
+}
+
+.btn-save:hover {
+    background: var(--primary-dark);
+    transform: translateY(-1px);
+}
+
+.btn-cancel {
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
+    border: 2px solid var(--border-color);
+}
+
+.btn-cancel:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+    border-color: var(--primary-color);
+}
+
+/* Responsive design for mobile */
+@media (max-width: 768px) {
+    .price-range-modal {
+        margin: 20px;
+        padding: 24px;
+        max-width: calc(100% - 40px);
+    }
+
+    .price-inputs {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    .form-actions {
+        flex-direction: column;
+    }
+
+    .btn-save, .btn-cancel {
+        width: 100%;
+    }
+
+    .generation-tag .edit-pencil {
+        width: 24px;
+        height: 24px;
+        font-size: 14px;
+        top: -10px;
+        right: -10px;
+    }
+}
+
 /* Clear Database Button */
 #clear-database-btn {
     background: var(--error-bg) !important;
@@ -733,6 +966,15 @@ body.dark-mode .listings-table th[style*="cursor: pointer"]:hover {
 /* Table Cell Styling */
 .model-cell {
     min-width: 140px;
+}
+
+.variant-cell {
+    min-width: 120px;
+    text-align: center;
+}
+
+.variant-cell div {
+    transition: all 0.2s ease;
 }
 
 .model-badge {

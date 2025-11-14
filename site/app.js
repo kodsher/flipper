@@ -34,6 +34,17 @@ const Dashboard = () => {
     const [showHidden, setShowHidden] = useState(false);
     const [showFavorites, setShowFavorites] = useState(false);
 
+    // Price range editing states
+    const [priceRangePopup, setPriceRangePopup] = useState({ show: false, generation: '' });
+    const [editingPriceRange, setEditingPriceRange] = useState({ min: '', max: '' });
+    const [generationPriceRanges, setGenerationPriceRanges] = useState({});
+
+    // iPhone variant states
+    const [selectedVariants, setSelectedVariants] = useState([]);
+    const [variantPriceRanges, setVariantPriceRanges] = useState({});
+    const [variantPopup, setVariantPopup] = useState({ show: false, variant: '' });
+    const [editingVariantPriceRange, setEditingVariantPriceRange] = useState({ min: '', max: '' });
+
     // Always dark mode
     useEffect(() => {
         // Add dark mode class to both html and body
@@ -311,6 +322,8 @@ const Dashboard = () => {
     const toggleModel = useCallback((model) => {
         setSelectedModels(prev => {
             if (model === 'all') {
+                // Clear all variant selections when going to 'all'
+                setSelectedVariants([]);
                 return ['all'];
             }
             let newSelection = prev.includes(model)
@@ -319,8 +332,16 @@ const Dashboard = () => {
 
             // If no models selected, default to 'all'
             if (newSelection.length === 0) {
+                setSelectedVariants([]);
                 return ['all'];
             }
+
+            // Clear variant and generation selections if iPhone is no longer selected
+            if (!newSelection.some(m => m.toLowerCase().includes('iphone'))) {
+                setSelectedVariants([]);
+                setSelectedGenerations(['all']);
+            }
+
             return newSelection;
         });
     }, []);
@@ -329,6 +350,8 @@ const Dashboard = () => {
     const toggleGeneration = useCallback((generation) => {
         setSelectedGenerations(prev => {
             if (generation === 'all') {
+                // Clear all variant selections when going to 'all'
+                setSelectedVariants([]);
                 return ['all'];
             }
             let newSelection = prev.includes(generation)
@@ -337,34 +360,285 @@ const Dashboard = () => {
 
             // If no generations selected, default to 'all'
             if (newSelection.length === 0) {
+                setSelectedVariants([]);
                 return ['all'];
             }
+
+            // Don't aggressively clear variants - let users manage their selections
+            // Variants will be validated during filtering instead
+
             return newSelection;
         });
     }, []);
 
-    
+    // Price range editing functions
+    const openPriceRangePopup = useCallback((generation) => {
+        const currentRange = generationPriceRanges[generation] || { min: '', max: '' };
+        setEditingPriceRange(currentRange);
+        setPriceRangePopup({ show: true, generation });
+    }, [generationPriceRanges]);
+
+    const closePriceRangePopup = useCallback(() => {
+        setPriceRangePopup({ show: false, generation: '' });
+        setEditingPriceRange({ min: '', max: '' });
+    }, []);
+
+    const savePriceRange = useCallback(() => {
+        const { generation } = priceRangePopup;
+        if (generation) {
+            setGenerationPriceRanges(prev => ({
+                ...prev,
+                [generation]: {
+                    min: editingPriceRange.min || '',
+                    max: editingPriceRange.max || ''
+                }
+            }));
+        }
+        closePriceRangePopup();
+    }, [priceRangePopup, editingPriceRange, closePriceRangePopup]);
+
+    const handlePriceRangeChange = useCallback((field, value) => {
+        // Only allow numbers
+        const numValue = value.replace(/[^0-9]/g, '');
+        setEditingPriceRange(prev => ({
+            ...prev,
+            [field]: numValue
+        }));
+    }, []);
+
+    // iPhone variant functions
+    const getVariantsForGeneration = useCallback((generation) => {
+        const variantMap = {
+            '17': ['pro_max', 'pro', 'air', 'regular'],  // iPhone 17 variants
+            '16': ['pro_max', 'pro', 'plus', 'e', 'regular'],  // iPhone 16 variants
+            '15': ['pro_max', 'pro', 'plus', 'regular'],  // iPhone 15 variants
+            '14': ['pro_max', 'pro', 'plus', 'regular'],  // iPhone 14 variants
+            'older': ['older_model']  // Single variant for all older models
+        };
+        return variantMap[generation] || [];
+    }, []);
+
+    const detectiPhoneVariant = useCallback((title) => {
+        if (!title) return null;
+
+        const lowerTitle = title.toLowerCase();
+
+        // Skip obvious non-phone listings (business ads, wholesale, bulk listings)
+        if (lowerTitle.includes('business') ||
+            lowerTitle.includes('wholesale') ||
+            lowerTitle.includes('bulk') ||
+            lowerTitle.includes('first business') ||
+            lowerTitle.includes('your first business') ||
+            lowerTitle.includes('multiple') ||
+            lowerTitle.includes('lot of') ||
+            lowerTitle.includes('bundle') ||
+            lowerTitle.includes('collection') ||
+            lowerTitle.includes('various') ||
+            lowerTitle.includes('assorted')) {
+            // Silently skip business listings
+            return null;
+        }
+
+        // iPhone 17 variants - require more specific matching
+        if (lowerTitle.includes('iphone 17')) {
+            // Look for specific patterns that indicate actual phones, not business listings
+            if ((lowerTitle.includes('iphone 17 pro max') && !lowerTitle.includes('iphone 17,')) ||
+                (lowerTitle.includes('17 pro max') && !lowerTitle.includes('17,'))) {
+                return '17_pro_max';
+            }
+            if ((lowerTitle.includes('iphone 17 pro') && !lowerTitle.includes('iphone 17,')) ||
+                (lowerTitle.includes('17 pro') && !lowerTitle.includes('17,'))) {
+                return '17_pro';
+            }
+            if ((lowerTitle.includes('iphone 17 air') && !lowerTitle.includes('iphone 17,')) ||
+                (lowerTitle.includes('17 air') && !lowerTitle.includes('17,'))) {
+                return '17_air';
+            }
+            // Regular iPhone 17 (no specific variant mentioned, but clean listing)
+            if (!lowerTitle.includes('pro') && !lowerTitle.includes('air') && !lowerTitle.includes('max') &&
+                !lowerTitle.includes('iphone 17,') && !lowerTitle.includes('17,')) {
+                return '17_regular';
+            }
+        }
+
+        // iPhone 16 variants - require more specific matching
+        if (lowerTitle.includes('iphone 16')) {
+            // Skip business/multiple listings that just mention iPhone 16 along with other models
+            if (lowerTitle.includes('iphone 16,') || lowerTitle.includes('16,')) {
+                return null;
+            }
+
+            if ((lowerTitle.includes('iphone 16 pro max') || lowerTitle.includes('16 pro max')) &&
+                !lowerTitle.includes('iphone 16,') && !lowerTitle.includes('16,')) {
+                return '16_pro_max';
+            }
+            if ((lowerTitle.includes('iphone 16 pro') || lowerTitle.includes('16 pro')) &&
+                !lowerTitle.includes('iphone 16,') && !lowerTitle.includes('16,')) {
+                return '16_pro';
+            }
+            if ((lowerTitle.includes('iphone 16 plus') || lowerTitle.includes('16 plus')) &&
+                !lowerTitle.includes('iphone 16,') && !lowerTitle.includes('16,')) {
+                return '16_plus';
+            }
+            if ((lowerTitle.includes('16e') || lowerTitle.includes('16 e')) &&
+                !lowerTitle.includes('iphone 16,') && !lowerTitle.includes('16,')) {
+                return '16_e';
+            }
+            // Regular iPhone 16 (no specific variant mentioned, but clean listing)
+            if (!lowerTitle.includes('pro') && !lowerTitle.includes('plus') && !lowerTitle.includes('16e') && !lowerTitle.includes('max') &&
+                !lowerTitle.includes('iphone 16,') && !lowerTitle.includes('16,')) {
+                return '16_regular';
+            }
+        }
+
+        // iPhone 15 variants - require more specific matching
+        if (lowerTitle.includes('iphone 15')) {
+            // Skip business/multiple listings
+            if (lowerTitle.includes('iphone 15,') || lowerTitle.includes('15,')) {
+                return null;
+            }
+
+            if ((lowerTitle.includes('iphone 15 pro max') || lowerTitle.includes('15 pro max')) &&
+                !lowerTitle.includes('iphone 15,') && !lowerTitle.includes('15,')) {
+                return '15_pro_max';
+            }
+            if ((lowerTitle.includes('iphone 15 pro') || lowerTitle.includes('15 pro')) &&
+                !lowerTitle.includes('iphone 15,') && !lowerTitle.includes('15,')) {
+                return '15_pro';
+            }
+            if ((lowerTitle.includes('iphone 15 plus') || lowerTitle.includes('15 plus')) &&
+                !lowerTitle.includes('iphone 15,') && !lowerTitle.includes('15,')) {
+                return '15_plus';
+            }
+            // Regular iPhone 15 (no specific variant mentioned, but clean listing)
+            if (!lowerTitle.includes('pro') && !lowerTitle.includes('plus') && !lowerTitle.includes('max') &&
+                !lowerTitle.includes('iphone 15,') && !lowerTitle.includes('15,')) {
+                return '15_regular';
+            }
+        }
+
+        // iPhone 14 variants - require more specific matching
+        if (lowerTitle.includes('iphone 14')) {
+            // Skip business/multiple listings
+            if (lowerTitle.includes('iphone 14,') || lowerTitle.includes('14,')) {
+                return null;
+            }
+
+            if ((lowerTitle.includes('iphone 14 pro max') || lowerTitle.includes('14 pro max')) &&
+                !lowerTitle.includes('iphone 14,') && !lowerTitle.includes('14,')) {
+                return '14_pro_max';
+            }
+            if ((lowerTitle.includes('iphone 14 pro') || lowerTitle.includes('14 pro')) &&
+                !lowerTitle.includes('iphone 14,') && !lowerTitle.includes('14,')) {
+                return '14_pro';
+            }
+            if ((lowerTitle.includes('iphone 14 plus') || lowerTitle.includes('14 plus')) &&
+                !lowerTitle.includes('iphone 14,') && !lowerTitle.includes('14,')) {
+                return '14_plus';
+            }
+            // Regular iPhone 14 (no specific variant mentioned, but clean listing)
+            if (!lowerTitle.includes('pro') && !lowerTitle.includes('plus') && !lowerTitle.includes('max') &&
+                !lowerTitle.includes('iphone 14,') && !lowerTitle.includes('14,')) {
+                return '14_regular';
+            }
+        }
+
+        // iPhone 13 and older - all categorized as "Older Model"
+        if (lowerTitle.includes('iphone 13') || lowerTitle.includes('iphone 12') ||
+            lowerTitle.includes('iphone 11') || lowerTitle.includes('iphone x') ||
+            lowerTitle.includes('iphone 10') || lowerTitle.includes('iphone 8') ||
+            lowerTitle.includes('iphone 7') || lowerTitle.includes('iphone 6') ||
+            lowerTitle.includes('iphone 5') || lowerTitle.includes('iphone 4')) {
+            return 'older_model';
+        }
+
+        return null;
+    }, []);
+
+    const updateListingsWithVariantData = useCallback((listings) => {
+        // Silently process variants without individual logging
+        let variantCount = 0;
+
+        const updatedListings = listings.map(listing => {
+            const variant = detectiPhoneVariant(listing.title);
+            if (variant) {
+                variantCount++;
+            }
+            return {
+                ...listing,
+                variant: variant || null
+            };
+        });
+
+        // Variant detection complete (silently processed)
+        return updatedListings;
+    }, [detectiPhoneVariant]);
+
+    const toggleVariant = useCallback((variant) => {
+        setSelectedVariants(prev => {
+            let newSelection = prev.includes(variant)
+                ? prev.filter(v => v !== variant)
+                : [...prev, variant];
+            return newSelection;
+        });
+    }, []);
+
+    const openVariantPopup = useCallback((variant) => {
+        const currentRange = variantPriceRanges[variant] || { min: '', max: '' };
+        setEditingVariantPriceRange(currentRange);
+        setVariantPopup({ show: true, variant });
+    }, [variantPriceRanges]);
+
+    const closeVariantPopup = useCallback(() => {
+        setVariantPopup({ show: false, variant: '' });
+        setEditingVariantPriceRange({ min: '', max: '' });
+    }, []);
+
+    const saveVariantPriceRange = useCallback(() => {
+        const { variant } = variantPopup;
+        if (variant) {
+            setVariantPriceRanges(prev => ({
+                ...prev,
+                [variant]: {
+                    min: editingVariantPriceRange.min || '',
+                    max: editingVariantPriceRange.max || ''
+                }
+            }));
+        }
+        closeVariantPopup();
+    }, [variantPopup, editingVariantPriceRange, closeVariantPopup]);
+
+    const handleVariantPriceRangeChange = useCallback((field, value) => {
+        const numValue = value.replace(/[^0-9]/g, '');
+        setEditingVariantPriceRange(prev => ({
+            ...prev,
+            [field]: numValue
+        }));
+    }, []);
+
     // Function to get unique search cities for filtering
     const getUniqueSearchCities = useCallback(() => {
         const cities = new Set();
-        phoneListings.forEach(listing => {
+        const filtered = getFilteredListings(); // Use filtered listings instead of all listings
+        filtered.forEach(listing => {
             const city = listing.search_city;
             if (city && city !== 'Unknown') {
                 cities.add(city);
             }
         });
         return Array.from(cities).sort();
-    }, [phoneListings]);
+    }, [getFilteredListings]);
 
     // Function to get count for each search city
     const getSearchCityCounts = useCallback(() => {
-        const counts = { all: phoneListings.length };
-        phoneListings.forEach(listing => {
+        const filtered = getFilteredListings();
+        const counts = { all: filtered.length };
+        filtered.forEach(listing => {
             const city = listing.search_city || 'Unknown';
             counts[city] = (counts[city] || 0) + 1;
         });
         return counts;
-    }, [phoneListings]);
+    }, [getFilteredListings]);
 
     // Function to toggle search city selection
     const toggleSearchCity = useCallback((searchCity) => {
@@ -591,10 +865,21 @@ const Dashboard = () => {
     const getFilteredListings = useCallback(() => {
         let filtered = phoneListings;
 
+        // Pre-compute filter flags to use in model filtering
+        const generationFilterActive = !selectedGenerations.includes('all');
+        const variantFilterActive = selectedVariants.length > 0;
+
         // Filter by model categories (multiple selection)
         if (!selectedModels.includes('all')) {
             filtered = filtered.filter(listing => {
                 const model = (listing.model || 'Unknown').toLowerCase();
+                const isIphone = model.includes('iphone');
+
+                // For iPhones, we need to handle generation/variant filtering separately
+                // So if iPhone is selected and generation/variant filtering is active, let iPhones through
+                if (isIphone && (generationFilterActive || variantFilterActive) && selectedModels.includes('iphone')) {
+                    return true; // Let generation/variant filters handle iPhones
+                }
 
                 // Check if this listing matches any selected category
                 return selectedModels.some(selectedCategory => {
@@ -623,25 +908,88 @@ const Dashboard = () => {
             });
         }
 
-        // Filter by generations (multiple selection) - only applies to iPhones
-        if (!selectedGenerations.includes('all')) {
-            filtered = filtered.filter(listing => {
-                const model = listing.model || '';
+        // Combine generation and variant filtering - only applies to iPhones
 
-                // Only filter by generation if it's an iPhone
-                if (!model.toLowerCase().includes('iphone')) {
-                    return true; // Non-iPhones pass through generation filter
+        if (generationFilterActive || variantFilterActive) {
+            // Create detailed debug log
+            const debugLog = [];
+            debugLog.push('🔍 STARTING IPHONE GENERATION/VARIANT FILTERING');
+            debugLog.push(`Selected Generations: ${JSON.stringify(selectedGenerations)}`);
+            debugLog.push(`Selected Variants: ${JSON.stringify(selectedVariants)}`);
+            debugLog.push(`Starting with ${filtered.length} listings`);
+            debugLog.push('─'.repeat(60));
+
+            filtered = filtered.filter((listing, index) => {
+                const model = listing.model || '';
+                const variant = listing.variant || '';
+                const isIphone = model && model.toLowerCase().includes('iphone');
+                const title = listing.title || '';
+
+                const logEntry = {
+                    index: index + 1,
+                    title: title.length > 50 ? title.substring(0, 50) + '...' : title,
+                    model,
+                    variant,
+                    isIphone
+                };
+
+                // Non-iPhones pass through all filters
+                if (!isIphone) {
+                    logEntry.result = '✅ PASSED (not iPhone)';
+                    logEntry.passed = true;
+                    debugLog.push(logEntry);
+                    return true;
                 }
 
-                // Check if this iPhone matches any selected generation
-                return selectedGenerations.some(selectedGeneration => {
-                    if (selectedGeneration === 'older') {
-                        return !model.includes('17') && !model.includes('16') && !model.includes('15') && !model.includes('14');
+                // iPhones must pass BOTH filters (AND logic)
+                let passesGenerationFilter = true;
+                let passesVariantFilter = true;
+
+                // Check generation filter
+                if (generationFilterActive) {
+                    passesGenerationFilter = selectedGenerations.some(selectedGeneration => {
+                        if (selectedGeneration === 'older') {
+                            return !model.includes('17') && !model.includes('16') && !model.includes('15') && !model.includes('14');
+                        } else {
+                            return model.includes(selectedGeneration);
+                        }
+                    });
+                    logEntry.generationFilter = passesGenerationFilter;
+                }
+
+                // Check variant filter (support both old and new variant names during transition)
+                if (variantFilterActive) {
+                    if (!variant) {
+                        passesVariantFilter = false; // If variant filtering active but no variant data, exclude
+                        logEntry.variantFilter = 'FAILED (no variant data)';
                     } else {
-                        return model.includes(selectedGeneration);
+                        const variantMatches = selectedVariants.some(selectedVariant => {
+                            // Handle both old variant names (like "17") and new ones (like "17_regular")
+                            const match = variant === selectedVariant ||
+                                         (selectedVariant === '17_regular' && variant === '17') ||
+                                         (selectedVariant === '16_regular' && variant === '16') ||
+                                         (selectedVariant === '15_regular' && variant === '15') ||
+                                         (selectedVariant === '14_regular' && variant === '14');
+                            return match;
+                        });
+                        passesVariantFilter = variantMatches;
+                        logEntry.variantFilter = variantMatches ? 'PASSED' : 'FAILED';
                     }
-                });
+                }
+
+                const finalResult = passesGenerationFilter && passesVariantFilter;
+                logEntry.result = finalResult ? '✅ PASSED' : '❌ EXCLUDED';
+                logEntry.passed = finalResult;
+
+                debugLog.push(logEntry);
+                return finalResult;
             });
+
+            debugLog.push('─'.repeat(60));
+            debugLog.push(`🎯 FINAL RESULT: ${filtered.length} listings remaining`);
+
+            // Store debug log for display but don't print the massive table
+            window.lastFilterDebugLog = debugLog;
         }
 
         // Filter by search cities (multiple selection)
@@ -740,7 +1088,7 @@ const Dashboard = () => {
         });
 
         return filtered;
-    }, [phoneListings, selectedModels, selectedGenerations, selectedSearchCities, selectedTimeRanges, priceRange, sortBy, sortOrder, searchTerm, showHidden, showFavorites, safeParseDate, getRelativeTime]);
+    }, [phoneListings, selectedModels, selectedGenerations, selectedVariants, selectedSearchCities, selectedTimeRanges, priceRange, sortBy, sortOrder, searchTerm, showHidden, showFavorites, safeParseDate, getRelativeTime]);
 
     // Helper function to safely parse date
     const safeParseDate = useCallback((dateString) => {
@@ -854,6 +1202,9 @@ const Dashboard = () => {
                 // Remove duplicates, keeping oldest entries
                 listings = removeDuplicatesKeepOldest(rawListings);
 
+                // Update listings with variant data
+                listings = updateListingsWithVariantData(listings);
+
                 // Update duplicate info
                 const duplicateCount = rawListings.length - listings.length;
                 setDuplicateInfo({
@@ -861,6 +1212,30 @@ const Dashboard = () => {
                     duplicates: duplicateCount,
                     unique: listings.length
                 });
+
+                // Batch update existing entries in database with variant data
+                const updates = {};
+                listings.forEach(listing => {
+                    if (listing.variant) {
+                        const originalListing = rawListings.find(r => r.id === listing.id);
+                        if (!originalListing || !originalListing.variant) {
+                            updates[`phone_listings/${listing.id}/variant`] = listing.variant;
+                            console.log(`📝 Adding variant ${listing.variant} to: ${listing.title}`);
+                        }
+                    }
+                });
+
+                if (Object.keys(updates).length > 0) {
+                    database.ref().update(updates)
+                        .then(() => {
+                            console.log(`✅ Updated ${Object.keys(updates).length} entries with variant data`);
+                        })
+                        .catch(error => {
+                            console.error('❌ Error updating variant data:', error);
+                        });
+                } else {
+                    console.log(`ℹ️ No new variant data to add`);
+                }
             }
 
             setPhoneListings(listings);
@@ -1035,7 +1410,7 @@ const Dashboard = () => {
                             transition: 'all 0.3s ease'
                         }}
                     >
-                        iPhone ({modelCounts.iphone})
+                        iPhone
                     </button>
                     <button
                         className={`model-tag ${selectedModels.includes('ipad') ? 'active' : ''}`}
@@ -1051,7 +1426,7 @@ const Dashboard = () => {
                             transition: 'all 0.3s ease'
                         }}
                     >
-                        iPad ({modelCounts.ipad})
+                        iPad
                     </button>
                     <button
                         className={`model-tag ${selectedModels.includes('macbook') ? 'active' : ''}`}
@@ -1067,7 +1442,7 @@ const Dashboard = () => {
                             transition: 'all 0.3s ease'
                         }}
                     >
-                        MacBook ({modelCounts.macbook})
+                        MacBook
                     </button>
                     <button
                         className={`model-tag ${selectedModels.includes('android') ? 'active' : ''}`}
@@ -1083,7 +1458,7 @@ const Dashboard = () => {
                             transition: 'all 0.3s ease'
                         }}
                     >
-                        Android ({modelCounts.android})
+                        Android
                     </button>
                     <button
                         className={`model-tag ${selectedModels.includes('android_tablet') ? 'active' : ''}`}
@@ -1099,7 +1474,7 @@ const Dashboard = () => {
                             transition: 'all 0.3s ease'
                         }}
                     >
-                        Android Tablets ({modelCounts.android_tablet})
+                        Android Tablets
                     </button>
                     <button
                         className={`model-tag ${selectedModels.includes('other_computers') ? 'active' : ''}`}
@@ -1115,7 +1490,7 @@ const Dashboard = () => {
                             transition: 'all 0.3s ease'
                         }}
                     >
-                        Other Computers ({modelCounts.other_computers})
+                        Other Computers
                     </button>
                     <button
                         className={`model-tag ${selectedModels.includes('other') ? 'active' : ''}`}
@@ -1131,7 +1506,7 @@ const Dashboard = () => {
                             transition: 'all 0.3s ease'
                         }}
                     >
-                        Other ({modelCounts.other})
+                        Other
                     </button>
                 </div>
 
@@ -1152,7 +1527,7 @@ const Dashboard = () => {
                                 transition: 'all 0.3s ease'
                             }}
                         >
-                            All iPhones ({generationCounts.all})
+                            All iPhones
                         </button>
                         {['17', '16', '15', '14', 'older'].map(gen => (
                             <button
@@ -1167,15 +1542,132 @@ const Dashboard = () => {
                                     borderRadius: '20px',
                                     fontWeight: '600',
                                     cursor: 'pointer',
-                                    transition: 'all 0.3s ease'
+                                    transition: 'all 0.3s ease',
+                                    position: 'relative',
+                                    overflow: 'visible'
                                 }}
                             >
-                                {gen.charAt(0).toUpperCase() + gen.slice(1)} ({generationCounts[gen]})
+                                {gen.charAt(0).toUpperCase() + gen.slice(1)}
+                                <span
+                                    className="edit-pencil"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        openPriceRangePopup(gen);
+                                    }}
+                                    title={`Set price range for iPhone ${gen.charAt(0).toUpperCase() + gen.slice(1)}`}
+                                >
+                                    ✏️
+                                </span>
                             </button>
                         ))}
                     </div>
                 )}
 
+                {/* iPhone Variant Tags */}
+                {selectedModels.some(model => model && model.toLowerCase().includes('iphone')) &&
+                 (selectedGenerations.some(gen => gen && gen !== 'all' && ['17', '16', '15', '14', 'older'].includes(gen)) ||
+                  selectedGenerations.includes('all')) && (
+                    <div className="variant-tags" style={{ marginBottom: '12px' }}>
+                        {/* Display each generation's variants on separate lines */}
+                        {selectedGenerations.includes('all') || selectedGenerations.some(gen => gen !== 'all' && ['17', '16', '15', '14', 'older'].includes(gen)) ? (
+                            ['17', '16', '15', '14', 'older'].filter(gen =>
+                                selectedGenerations.includes('all') || selectedGenerations.includes(gen)
+                            ).map(gen => {
+                                if (gen === 'older') {
+                                    return (
+                                        <div key={gen} style={{ marginBottom: '12px' }}>
+                                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                                                <button
+                                                    key="older_model"
+                                                    className={`variant-tag generation-tag ${selectedVariants.includes('older_model') ? 'active' : ''}`}
+                                                    onClick={() => toggleVariant('older_model')}
+                                                    style={{
+                                                        background: selectedVariants.includes('older_model') ? '#1877f2' : '#1c2128',
+                                                        color: selectedVariants.includes('older_model') ? 'white' : '#333',
+                                                        border: '2px solid #1877f2',
+                                                        padding: '6px 12px',
+                                                        borderRadius: '20px',
+                                                        fontWeight: '600',
+                                                        cursor: 'pointer',
+                                                        transition: 'all 0.3s ease',
+                                                        position: 'relative',
+                                                        overflow: 'visible',
+                                                        fontSize: '0.8rem'
+                                                    }}
+                                                >
+                                                    Older Models
+                                                    <span
+                                                        className="edit-pencil"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            openVariantPopup('older_model');
+                                                        }}
+                                                        title="Set price range for Older iPhone Models"
+                                                    >
+                                                        ✏️
+                                                    </span>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    );
+                                }
+
+                                const variants = getVariantsForGeneration(gen);
+                                // Reorder variants to put the regular/numeric variant first
+                                const reorderedVariants = [
+                                    variants.find(v => v === 'regular'),
+                                    ...variants.filter(v => v !== 'regular')
+                                ].filter(Boolean);
+
+                                return (
+                                    <div key={gen} style={{ marginBottom: '12px' }}>
+                                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                                            {reorderedVariants.map(variant => {
+                                                const fullVariantName = `${gen}_${variant}`;
+                                                const displayVariant = variant === 'regular' ? gen : variant.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+
+                                                return (
+                                                    <button
+                                                        key={fullVariantName}
+                                                        className={`variant-tag generation-tag ${selectedVariants.includes(fullVariantName) ? 'active' : ''}`}
+                                                        onClick={() => toggleVariant(fullVariantName)}
+                                                        style={{
+                                                            background: selectedVariants.includes(fullVariantName) ? '#1877f2' : '#1c2128',
+                                                            color: selectedVariants.includes(fullVariantName) ? 'white' : '#333',
+                                                            border: '2px solid #1877f2',
+                                                            padding: '6px 12px',
+                                                            borderRadius: '20px',
+                                                            fontWeight: '600',
+                                                            cursor: 'pointer',
+                                                            transition: 'all 0.3s ease',
+                                                            position: 'relative',
+                                                            overflow: 'visible',
+                                                            fontSize: '0.8rem'
+                                                        }}
+                                                    >
+                                                        {displayVariant}
+                                                        <span
+                                                            className="edit-pencil"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                openVariantPopup(fullVariantName);
+                                                            }}
+                                                            title={`Set price range for iPhone ${gen} ${displayVariant}`}
+                                                        >
+                                                            ✏️
+                                                        </span>
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                );
+                            })
+                        ) : null}
+                    </div>
+                )}
+
+                
                 {/* Search City Tags */}
                 <div className="search-city-tags" style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '12px', marginTop: '12px' }}>
                     <button
@@ -1193,7 +1685,7 @@ const Dashboard = () => {
                             fontSize: '14px'
                         }}
                     >
-                        All Cities ({searchCityCounts.all})
+                        All Cities
                     </button>
                     {getUniqueSearchCities().map(searchCity => (
                         <button
@@ -1212,7 +1704,7 @@ const Dashboard = () => {
                                 fontSize: '14px'
                             }}
                         >
-                            {searchCity} ({searchCityCounts[searchCity] || 0})
+                            {searchCity}
                         </button>
                     ))}
                 </div>
@@ -1420,17 +1912,10 @@ const Dashboard = () => {
                         <table className="listings-table">
                             <thead>
                                 <tr>
-                                    <th
-                                        onClick={() => toggleSort('model')}
-                                        style={{ cursor: 'pointer', userSelect: 'none', display: 'none' }}
-                                        title="Click to sort by model"
+                                                                        <th
+                                        style={{ cursor: 'default', minWidth: '120px', textAlign: 'center', padding: '10px 8px' }}
                                     >
-                                        Model
-                                        {sortBy === 'model' && (
-                                            <span style={{ marginLeft: '5px', fontSize: '0.8rem' }}>
-                                                {sortOrder === 'asc' ? '↑' : '↓'}
-                                            </span>
-                                        )}
+                                        Variant
                                     </th>
                                     <th
                                         onClick={() => toggleSort('title')}
@@ -1493,16 +1978,25 @@ const Dashboard = () => {
                                         onMouseDown={(e) => handleMouseDown(e, listing.id)}
                                         style={{ cursor: 'grab' }}
                                     >
-                                        <td className="model-cell" style={{ width: '180px', maxWidth: '180px', display: 'none' }}>
+                                                                                <td className="variant-cell" style={{ width: '120px', maxWidth: '120px' }}>
                                             <div style={{
-                                                color: '#333',
-                                                fontSize: '0.85rem',
+                                                color: listing.variant ? '#1877f2' : '#999',
+                                                fontSize: '0.75rem',
+                                                fontWeight: listing.variant ? '600' : '400',
                                                 lineHeight: '1.3',
                                                 overflow: 'hidden',
                                                 textOverflow: 'ellipsis',
-                                                whiteSpace: 'nowrap'
+                                                whiteSpace: 'nowrap',
+                                                backgroundColor: listing.variant ? '#e3f2fd' : 'transparent',
+                                                padding: '2px 6px',
+                                                borderRadius: '4px',
+                                                textAlign: 'center'
                                             }}>
-                                                {listing.model || 'Unknown'}
+                                                {listing.variant ?
+                                                    listing.variant === 'older_model' ? 'Older Model' :
+                                                    listing.variant.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) :
+                                                    'None'
+                                                }
                                             </div>
                                         </td>
                                         <td className="title-cell" style={{ width: '160px', maxWidth: '160px' }}>
@@ -1596,6 +2090,122 @@ const Dashboard = () => {
                     </div>
                 )}
             </section>
+
+            {/* Price Range Popup Overlay */}
+            {priceRangePopup.show && (
+                <div className={`price-range-overlay ${priceRangePopup.show ? 'active' : ''}`} onClick={closePriceRangePopup}>
+                    <div className="price-range-modal" onClick={(e) => e.stopPropagation()}>
+                        <div className="price-range-header">
+                            <div>
+                                <h2 className="price-range-title">
+                                    Set Price Range
+                                </h2>
+                                <p className="price-range-subtitle">
+                                    iPhone {priceRangePopup.generation.charAt(0).toUpperCase() + priceRangePopup.generation.slice(1)}
+                                </p>
+                            </div>
+                            <button className="close-button" onClick={closePriceRangePopup}>
+                                ×
+                            </button>
+                        </div>
+
+                        <div className="price-range-form">
+                            <div className="form-group">
+                                <label>Price Range ($)</label>
+                                <div className="price-inputs">
+                                    <div className="price-input">
+                                        <label htmlFor="min-price">Minimum</label>
+                                        <input
+                                            id="min-price"
+                                            type="text"
+                                            placeholder="Min price"
+                                            value={editingPriceRange.min}
+                                            onChange={(e) => handlePriceRangeChange('min', e.target.value)}
+                                        />
+                                    </div>
+                                    <div className="price-input">
+                                        <label htmlFor="max-price">Maximum</label>
+                                        <input
+                                            id="max-price"
+                                            type="text"
+                                            placeholder="Max price"
+                                            value={editingPriceRange.max}
+                                            onChange={(e) => handlePriceRangeChange('max', e.target.value)}
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="form-actions">
+                                <button className="btn-cancel" onClick={closePriceRangePopup}>
+                                    Cancel
+                                </button>
+                                <button className="btn-save" onClick={savePriceRange}>
+                                    Save Price Range
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Variant Price Range Popup Overlay */}
+            {variantPopup.show && (
+                <div className={`price-range-overlay ${variantPopup.show ? 'active' : ''}`} onClick={closeVariantPopup}>
+                    <div className="price-range-modal" onClick={(e) => e.stopPropagation()}>
+                        <div className="price-range-header">
+                            <div>
+                                <h2 className="price-range-title">
+                                    Set Price Range
+                                </h2>
+                                <p className="price-range-subtitle">
+                                    {variantPopup.variant.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                                </p>
+                            </div>
+                            <button className="close-button" onClick={closeVariantPopup}>
+                                ×
+                            </button>
+                        </div>
+
+                        <div className="price-range-form">
+                            <div className="form-group">
+                                <label>Price Range ($)</label>
+                                <div className="price-inputs">
+                                    <div className="price-input">
+                                        <label htmlFor="variant-min-price">Minimum</label>
+                                        <input
+                                            id="variant-min-price"
+                                            type="text"
+                                            placeholder="Min price"
+                                            value={editingVariantPriceRange.min}
+                                            onChange={(e) => handleVariantPriceRangeChange('min', e.target.value)}
+                                        />
+                                    </div>
+                                    <div className="price-input">
+                                        <label htmlFor="variant-max-price">Maximum</label>
+                                        <input
+                                            id="variant-max-price"
+                                            type="text"
+                                            placeholder="Max price"
+                                            value={editingVariantPriceRange.max}
+                                            onChange={(e) => handleVariantPriceRangeChange('max', e.target.value)}
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="form-actions">
+                                <button className="btn-cancel" onClick={closeVariantPopup}>
+                                    Cancel
+                                </button>
+                                <button className="btn-save" onClick={saveVariantPriceRange}>
+                                    Save Price Range
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
