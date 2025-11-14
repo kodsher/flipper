@@ -619,27 +619,60 @@ const Dashboard = () => {
     // Function to get unique search cities for filtering
     const getUniqueSearchCities = useCallback(() => {
         const cities = new Set();
+
+        // Only show cities that have listings matching the selected models
         phoneListings.forEach(listing => {
             const city = listing.search_city;
             if (city && city !== 'Unknown') {
-                cities.add(city);
+                // Check if this listing matches the selected models
+                const matchesSelectedModels = selectedModels.includes('all') ||
+                    selectedModels.some(model => {
+                        const lowerModel = (listing.model || '').toLowerCase();
+                        const lowerTitle = (listing.title || '').toLowerCase();
+
+                        if (model === 'iphone') {
+                            return lowerTitle.includes('iphone');
+                        } else if (model === 'ipad') {
+                            return lowerModel.includes('ipad') || lowerTitle.includes('ipad');
+                        } else if (model === 'macbook') {
+                            return lowerModel.includes('macbook') || lowerTitle.includes('macbook') ||
+                                   lowerModel.includes('mac book') || lowerTitle.includes('mac book');
+                        } else if (model === 'android') {
+                            return lowerModel.includes('samsung') || lowerTitle.includes('samsung') ||
+                                   lowerModel.includes('galaxy') || lowerTitle.includes('galaxy') ||
+                                   lowerModel.includes('pixel') || lowerTitle.includes('pixel') ||
+                                   lowerModel.includes('oneplus') || lowerTitle.includes('oneplus') ||
+                                   lowerModel.includes('lg') || lowerTitle.includes('lg') ||
+                                   lowerModel.includes('sony') || lowerTitle.includes('sony') ||
+                                   lowerModel.includes('motorola') || lowerTitle.includes('motorola') ||
+                                   lowerModel.includes('nokia') || lowerTitle.includes('nokia') ||
+                                   lowerModel.includes('htc') || lowerTitle.includes('htc');
+                        } else if (model === 'android_tablet') {
+                            return lowerModel.includes('android tablet') || lowerTitle.includes('android tablet') ||
+                                   lowerModel.includes('galaxy tab') || lowerTitle.includes('galaxy tab') ||
+                                   lowerModel.includes('pixel tablet') || lowerTitle.includes('pixel tablet');
+                        } else if (model === 'other_computers') {
+                            return lowerModel.includes('laptop') || lowerTitle.includes('laptop') ||
+                                   lowerModel.includes('dell') || lowerTitle.includes('dell') ||
+                                   lowerModel.includes('hp') || lowerTitle.includes('hp') ||
+                                   lowerModel.includes('lenovo') || lowerTitle.includes('lenovo') ||
+                                   lowerModel.includes('asus') || lowerTitle.includes('asus') ||
+                                   lowerModel.includes('acer') || lowerTitle.includes('acer') ||
+                                   lowerModel.includes('microsoft') || lowerTitle.includes('microsoft') ||
+                                   lowerModel.includes('surface') || lowerTitle.includes('surface') ||
+                                   lowerModel.includes('pc') || lowerTitle.includes('pc');
+                        }
+                        return false;
+                    });
+
+                if (matchesSelectedModels) {
+                    cities.add(city);
+                }
             }
         });
 
-        // Debug: Log what cities we found and Phoenix-specific info
-        const cityList = Array.from(cities).sort();
-        console.log('🏙️ All cities in database:', cityList);
-
-        const phoenixListings = phoneListings.filter(l => l.search_city === 'Phoenix');
-        console.log(`🔍 Found ${phoenixListings.length} Phoenix listings:`, phoenixListings.map(l => ({
-            title: l.title,
-            model: l.model,
-            variant: l.variant,
-            isIphone: l.title.toLowerCase().includes('iphone')
-        })));
-
-        return cityList;
-    }, [phoneListings]);
+        return Array.from(cities).sort();
+    }, [phoneListings, selectedModels]);
 
     // Function to get count for each search city
     const getSearchCityCounts = useCallback(() => {
