@@ -977,8 +977,8 @@ const Dashboard = () => {
                             onClick={clearDatabaseAndPushToGitHub}
                             style={{
                                 background: 'transparent',
-                                color: '#1877f2',
-                                border: '2px solid #1877f2',
+                                color: '#4a5568',
+                                border: '2px solid #4a5568',
                                 padding: '8px 16px',
                                 borderRadius: '6px',
                                 fontWeight: '600',
@@ -987,13 +987,13 @@ const Dashboard = () => {
                                 fontSize: '0.9rem'
                             }}
                             onMouseOver={(e) => {
-                                e.target.style.background = '#1877f2';
+                                e.target.style.background = '#4a5568';
                                 e.target.style.color = 'white';
                                 e.target.style.transform = 'translateY(-1px)';
                             }}
                             onMouseOut={(e) => {
                                 e.target.style.background = 'transparent';
-                                e.target.style.color = '#1877f2';
+                                e.target.style.color = '#4a5568';
                                 e.target.style.transform = 'translateY(0)';
                             }}
                             title="Delete ALL listings from database"
@@ -1009,9 +1009,9 @@ const Dashboard = () => {
                         className={`model-tag ${selectedModels.includes('all') ? 'active' : ''}`}
                         onClick={() => toggleModel('all')}
                         style={{
-                            background: selectedModels.includes('all') ? '#1877f2' : '#1c2128',
+                            background: selectedModels.includes('all') ? '#4a5568' : '#1c2128',
                             color: selectedModels.includes('all') ? 'white' : '#f0f6fc',
-                            border: '2px solid #e1e1e1',
+                            border: '2px solid #4a5568',
                             padding: '8px 16px',
                             borderRadius: '20px',
                             fontWeight: '600',
@@ -1025,9 +1025,9 @@ const Dashboard = () => {
                         className={`model-tag ${selectedModels.includes('iphone') ? 'active' : ''}`}
                         onClick={() => toggleModel('iphone')}
                         style={{
-                            background: selectedModels.includes('iphone') ? '#1877f2' : '#1c2128',
+                            background: selectedModels.includes('iphone') ? '#4a5568' : '#1c2128',
                             color: selectedModels.includes('iphone') ? 'white' : '#f0f6fc',
-                            border: '2px solid #e1e1e1',
+                            border: '2px solid #4a5568',
                             padding: '8px 16px',
                             borderRadius: '20px',
                             fontWeight: '600',
@@ -1041,9 +1041,9 @@ const Dashboard = () => {
                         className={`model-tag ${selectedModels.includes('ipad') ? 'active' : ''}`}
                         onClick={() => toggleModel('ipad')}
                         style={{
-                            background: selectedModels.includes('ipad') ? '#1877f2' : '#1c2128',
+                            background: selectedModels.includes('ipad') ? '#4a5568' : '#1c2128',
                             color: selectedModels.includes('ipad') ? 'white' : '#f0f6fc',
-                            border: '2px solid #e1e1e1',
+                            border: '2px solid #4a5568',
                             padding: '8px 16px',
                             borderRadius: '20px',
                             fontWeight: '600',
@@ -1057,9 +1057,9 @@ const Dashboard = () => {
                         className={`model-tag ${selectedModels.includes('macbook') ? 'active' : ''}`}
                         onClick={() => toggleModel('macbook')}
                         style={{
-                            background: selectedModels.includes('macbook') ? '#1877f2' : '#1c2128',
+                            background: selectedModels.includes('macbook') ? '#4a5568' : '#1c2128',
                             color: selectedModels.includes('macbook') ? 'white' : '#f0f6fc',
-                            border: '2px solid #e1e1e1',
+                            border: '2px solid #4a5568',
                             padding: '8px 16px',
                             borderRadius: '20px',
                             fontWeight: '600',
@@ -1073,9 +1073,9 @@ const Dashboard = () => {
                         className={`model-tag ${selectedModels.includes('android') ? 'active' : ''}`}
                         onClick={() => toggleModel('android')}
                         style={{
-                            background: selectedModels.includes('android') ? '#1877f2' : '#1c2128',
+                            background: selectedModels.includes('android') ? '#4a5568' : '#1c2128',
                             color: selectedModels.includes('android') ? 'white' : '#f0f6fc',
-                            border: '2px solid #e1e1e1',
+                            border: '2px solid #4a5568',
                             padding: '8px 16px',
                             borderRadius: '20px',
                             fontWeight: '600',
@@ -1089,9 +1089,9 @@ const Dashboard = () => {
                         className={`model-tag ${selectedModels.includes('android_tablet') ? 'active' : ''}`}
                         onClick={() => toggleModel('android_tablet')}
                         style={{
-                            background: selectedModels.includes('android_tablet') ? '#1877f2' : '#1c2128',
+                            background: selectedModels.includes('android_tablet') ? '#4a5568' : '#1c2128',
                             color: selectedModels.includes('android_tablet') ? 'white' : '#f0f6fc',
-                            border: '2px solid #e1e1e1',
+                            border: '2px solid #4a5568',
                             padding: '8px 16px',
                             borderRadius: '20px',
                             fontWeight: '600',
@@ -1105,9 +1105,9 @@ const Dashboard = () => {
                         className={`model-tag ${selectedModels.includes('other_computers') ? 'active' : ''}`}
                         onClick={() => toggleModel('other_computers')}
                         style={{
-                            background: selectedModels.includes('other_computers') ? '#1877f2' : '#1c2128',
+                            background: selectedModels.includes('other_computers') ? '#4a5568' : '#1c2128',
                             color: selectedModels.includes('other_computers') ? 'white' : '#f0f6fc',
-                            border: '2px solid #e1e1e1',
+                            border: '2px solid #4a5568',
                             padding: '8px 16px',
                             borderRadius: '20px',
                             fontWeight: '600',
@@ -1121,9 +1121,9 @@ const Dashboard = () => {
                         className={`model-tag ${selectedModels.includes('other') ? 'active' : ''}`}
                         onClick={() => toggleModel('other')}
                         style={{
-                            background: selectedModels.includes('other') ? '#1877f2' : '#1c2128',
+                            background: selectedModels.includes('other') ? '#4a5568' : '#1c2128',
                             color: selectedModels.includes('other') ? 'white' : '#f0f6fc',
-                            border: '2px solid #e1e1e1',
+                            border: '2px solid #4a5568',
                             padding: '8px 16px',
                             borderRadius: '20px',
                             fontWeight: '600',
@@ -1142,9 +1142,9 @@ const Dashboard = () => {
                             className={`generation-tag ${selectedGenerations.includes('all') ? 'active' : ''}`}
                             onClick={() => toggleGeneration('all')}
                             style={{
-                                background: selectedGenerations.includes('all') ? '#1877f2' : '#1c2128',
+                                background: selectedGenerations.includes('all') ? '#4a5568' : '#1c2128',
                                 color: selectedGenerations.includes('all') ? 'white' : '#f0f6fc',
-                                border: '2px solid #e1e1e1',
+                                border: '2px solid #4a5568',
                                 padding: '8px 16px',
                                 borderRadius: '20px',
                                 fontWeight: '600',
@@ -1160,9 +1160,9 @@ const Dashboard = () => {
                                 className={`generation-tag ${selectedGenerations.includes(gen) ? 'active' : ''}`}
                                 onClick={() => toggleGeneration(gen)}
                                 style={{
-                                    background: selectedGenerations.includes(gen) ? '#1877f2' : '#1c2128',
+                                    background: selectedGenerations.includes(gen) ? '#4a5568' : '#1c2128',
                                     color: selectedGenerations.includes(gen) ? 'white' : '#f0f6fc',
-                                    border: '2px solid #e1e1e1',
+                                    border: '2px solid #4a5568',
                                     padding: '8px 16px',
                                     borderRadius: '20px',
                                     fontWeight: '600',
@@ -1182,9 +1182,9 @@ const Dashboard = () => {
                         className={`search-city-tag ${selectedSearchCities.includes('all') ? 'active' : ''}`}
                         onClick={() => toggleSearchCity('all')}
                         style={{
-                            background: selectedSearchCities.includes('all') ? '#1877f2' : '#1c2128',
+                            background: selectedSearchCities.includes('all') ? '#4a5568' : '#1c2128',
                             color: selectedSearchCities.includes('all') ? 'white' : '#f0f6fc',
-                            border: '2px solid #e1e1e1',
+                            border: '2px solid #4a5568',
                             padding: '8px 16px',
                             borderRadius: '20px',
                             fontWeight: '600',
@@ -1201,9 +1201,9 @@ const Dashboard = () => {
                             className={`search-city-tag ${selectedSearchCities.includes(searchCity) ? 'active' : ''}`}
                             onClick={() => toggleSearchCity(searchCity)}
                             style={{
-                                background: selectedSearchCities.includes(searchCity) ? '#1877f2' : '#1c2128',
+                                background: selectedSearchCities.includes(searchCity) ? '#4a5568' : '#1c2128',
                                 color: selectedSearchCities.includes(searchCity) ? 'white' : '#f0f6fc',
-                                border: '2px solid #e1e1e1',
+                                border: '2px solid #4a5568',
                                 padding: '8px 16px',
                                 borderRadius: '20px',
                                 fontWeight: '600',
@@ -1223,9 +1223,9 @@ const Dashboard = () => {
                         className={`time-range-tag ${selectedTimeRanges.includes('all') ? 'active' : ''}`}
                         onClick={() => toggleTimeRange('all')}
                         style={{
-                            background: selectedTimeRanges.includes('all') ? '#1877f2' : '#1c2128',
+                            background: selectedTimeRanges.includes('all') ? '#4a5568' : '#1c2128',
                             color: selectedTimeRanges.includes('all') ? 'white' : '#f0f6fc',
-                            border: '2px solid #e1e1e1',
+                            border: '2px solid #4a5568',
                             padding: '8px 16px',
                             borderRadius: '20px',
                             fontWeight: '600',
@@ -1240,9 +1240,9 @@ const Dashboard = () => {
                         className={`time-range-tag ${selectedTimeRanges.includes('just_now') ? 'active' : ''}`}
                         onClick={() => toggleTimeRange('just_now')}
                         style={{
-                            background: selectedTimeRanges.includes('just_now') ? '#1877f2' : '#1c2128',
+                            background: selectedTimeRanges.includes('just_now') ? '#4a5568' : '#1c2128',
                             color: selectedTimeRanges.includes('just_now') ? 'white' : '#f0f6fc',
-                            border: '2px solid #e1e1e1',
+                            border: '2px solid #4a5568',
                             padding: '8px 16px',
                             borderRadius: '20px',
                             fontWeight: '600',
@@ -1257,9 +1257,9 @@ const Dashboard = () => {
                         className={`time-range-tag ${selectedTimeRanges.includes('12_hours') ? 'active' : ''}`}
                         onClick={() => toggleTimeRange('12_hours')}
                         style={{
-                            background: selectedTimeRanges.includes('12_hours') ? '#1877f2' : '#1c2128',
+                            background: selectedTimeRanges.includes('12_hours') ? '#4a5568' : '#1c2128',
                             color: selectedTimeRanges.includes('12_hours') ? 'white' : '#f0f6fc',
-                            border: '2px solid #e1e1e1',
+                            border: '2px solid #4a5568',
                             padding: '8px 16px',
                             borderRadius: '20px',
                             fontWeight: '600',
@@ -1274,9 +1274,9 @@ const Dashboard = () => {
                         className={`time-range-tag ${selectedTimeRanges.includes('24_hours') ? 'active' : ''}`}
                         onClick={() => toggleTimeRange('24_hours')}
                         style={{
-                            background: selectedTimeRanges.includes('24_hours') ? '#1877f2' : '#1c2128',
+                            background: selectedTimeRanges.includes('24_hours') ? '#4a5568' : '#1c2128',
                             color: selectedTimeRanges.includes('24_hours') ? 'white' : '#f0f6fc',
-                            border: '2px solid #e1e1e1',
+                            border: '2px solid #4a5568',
                             padding: '8px 16px',
                             borderRadius: '20px',
                             fontWeight: '600',
@@ -1291,9 +1291,9 @@ const Dashboard = () => {
                         className={`time-range-tag ${selectedTimeRanges.includes('3_days') ? 'active' : ''}`}
                         onClick={() => toggleTimeRange('3_days')}
                         style={{
-                            background: selectedTimeRanges.includes('3_days') ? '#1877f2' : '#1c2128',
+                            background: selectedTimeRanges.includes('3_days') ? '#4a5568' : '#1c2128',
                             color: selectedTimeRanges.includes('3_days') ? 'white' : '#f0f6fc',
-                            border: '2px solid #e1e1e1',
+                            border: '2px solid #4a5568',
                             padding: '8px 16px',
                             borderRadius: '20px',
                             fontWeight: '600',
@@ -1316,14 +1316,14 @@ const Dashboard = () => {
                         style={{
                             width: '100%',
                             padding: '10px 12px',
-                            border: '2px solid #e1e1e1',
+                            border: '2px solid #4a5568',
                             borderRadius: '8px',
                             fontSize: '1rem',
                             transition: 'border-color 0.3s ease',
                             background: '#161b22'
                         }}
-                        onFocus={(e) => e.target.style.borderColor = '#1877f2'}
-                        onBlur={(e) => e.target.style.borderColor = '#e1e1e1'}
+                        onFocus={(e) => e.target.style.borderColor = '#4a5568'}
+                        onBlur={(e) => e.target.style.borderColor = '#4a5568'}
                     />
                 </div>
 
@@ -1336,7 +1336,7 @@ const Dashboard = () => {
                             onChange={(e) => setPriceRange(prev => ({ ...prev, min: parseInt(e.target.value) || 0 }))}
                             style={{
                                 padding: '8px 12px',
-                                border: '2px solid #e1e1e1',
+                                border: '2px solid #4a5568',
                                 borderRadius: '8px',
                                 width: '120px',
                                 fontSize: '1rem'
@@ -1350,7 +1350,7 @@ const Dashboard = () => {
                             onChange={(e) => setPriceRange(prev => ({ ...prev, max: parseInt(e.target.value) || 10000 }))}
                             style={{
                                 padding: '8px 12px',
-                                border: '2px solid #e1e1e1',
+                                border: '2px solid #4a5568',
                                 borderRadius: '8px',
                                 width: '120px',
                                 fontSize: '1rem'
@@ -1364,9 +1364,9 @@ const Dashboard = () => {
                     <button
                         onClick={() => setShowHidden(!showHidden)}
                         style={{
-                            background: showHidden ? '#1877f2' : '#1c2128',
+                            background: showHidden ? '#4a5568' : '#1c2128',
                             color: showHidden ? 'white' : '#f0f6fc',
-                            border: '2px solid #e1e1e1',
+                            border: '2px solid #4a5568',
                             padding: '10px',
                             borderRadius: '50%',
                             width: '40px',
@@ -1388,7 +1388,7 @@ const Dashboard = () => {
                         style={{
                             background: showFavorites ? '#ffc107' : '#1c2128',
                             color: showFavorites ? '#f0f6fc' : '#f0f6fc',
-                            border: '2px solid #e1e1e1',
+                            border: '2px solid #4a5568',
                             padding: '10px',
                             borderRadius: '50%',
                             width: '40px',
@@ -1513,7 +1513,7 @@ const Dashboard = () => {
                                                     rel="noopener noreferrer"
                                                     className="title-link"
                                                     style={{
-                                                        color: '#1877f2',
+                                                        color: '#4a5568',
                                                         textDecoration: 'none',
                                                         cursor: 'pointer',
                                                         display: 'block',
@@ -1559,7 +1559,7 @@ const Dashboard = () => {
                                                 style={{
                                                     background: listing.favorited ? '#ffc107' : '#1c2128',
                                                     color: listing.favorited ? '#f0f6fc' : '#666',
-                                                    border: '1px solid #e1e1e1',
+                                                    border: '1px solid #4a5568',
                                                     borderRadius: '4px',
                                                     padding: '4px 8px',
                                                     marginRight: '5px',
@@ -1574,9 +1574,9 @@ const Dashboard = () => {
                                             <button
                                                 onClick={() => toggleHideItem(listing.id, listing.hidden)}
                                                 style={{
-                                                    background: listing.hidden ? '#1877f2' : '#1c2128',
+                                                    background: listing.hidden ? '#4a5568' : '#1c2128',
                                                     color: listing.hidden ? 'white' : '#666',
-                                                    border: '1px solid #e1e1e1',
+                                                    border: '1px solid #4a5568',
                                                     borderRadius: '4px',
                                                     padding: '4px 8px',
                                                     marginLeft: '5px',
