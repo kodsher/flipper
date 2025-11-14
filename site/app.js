@@ -619,26 +619,37 @@ const Dashboard = () => {
     // Function to get unique search cities for filtering
     const getUniqueSearchCities = useCallback(() => {
         const cities = new Set();
-        const filtered = getFilteredListings(); // Use filtered listings instead of all listings
-        filtered.forEach(listing => {
+        phoneListings.forEach(listing => {
             const city = listing.search_city;
             if (city && city !== 'Unknown') {
                 cities.add(city);
             }
         });
-        return Array.from(cities).sort();
-    }, [getFilteredListings]);
+
+        // Debug: Log what cities we found and Phoenix-specific info
+        const cityList = Array.from(cities).sort();
+        console.log('🏙️ All cities in database:', cityList);
+
+        const phoenixListings = phoneListings.filter(l => l.search_city === 'Phoenix');
+        console.log(`🔍 Found ${phoenixListings.length} Phoenix listings:`, phoenixListings.map(l => ({
+            title: l.title,
+            model: l.model,
+            variant: l.variant,
+            isIphone: l.title.toLowerCase().includes('iphone')
+        })));
+
+        return cityList;
+    }, [phoneListings]);
 
     // Function to get count for each search city
     const getSearchCityCounts = useCallback(() => {
-        const filtered = getFilteredListings();
-        const counts = { all: filtered.length };
-        filtered.forEach(listing => {
+        const counts = { all: phoneListings.length };
+        phoneListings.forEach(listing => {
             const city = listing.search_city || 'Unknown';
             counts[city] = (counts[city] || 0) + 1;
         });
         return counts;
-    }, [getFilteredListings]);
+    }, [phoneListings]);
 
     // Function to toggle search city selection
     const toggleSearchCity = useCallback((searchCity) => {
