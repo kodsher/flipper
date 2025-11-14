@@ -13,16 +13,16 @@
     --text-primary: #f0f6fc;
     --text-secondary: #8b949e;
     --text-muted: #656d76;
-    --text-link: #4a5568;
+    --text-link: #1877f2;
     --text-white: white;
 
     --border-color: #30363d;
     --border-light: #21262d;
     --border-input: #30363d;
 
-    --primary-color: #4a5568;
+    --primary-color: #1877f2;
     --primary-dark: #1f6feb;
-    --primary-gradient: linear-gradient(135deg, #4a5568 0%, #1f6feb 100%);
+    --primary-gradient: linear-gradient(135deg, #1877f2 0%, #1f6feb 100%);
 
     --success-bg: #1a3f3f;
     --success-text: #3fb950;
@@ -184,7 +184,7 @@ button[style*="background: rgb(248, 249, 250)"] {
     border-color: var(--border-input) !important;
 }
 
-button[style*="background: #4a5568"],
+button[style*="background: #1877f2"],
 button[style*="background: rgb(24, 119, 242)"] {
     background: var(--primary-color) !important;
     color: var(--text-white) !important;
@@ -208,7 +208,7 @@ button[style*="color: rgb(102, 102, 102)"] {
     color: var(--text-secondary) !important;
 }
 
-button[style*="color: #4a5568"],
+button[style*="color: #1877f2"],
 button[style*="color: rgb(24, 119, 242)"] {
     color: var(--primary-color) !important;
 }
@@ -230,7 +230,7 @@ td[style*="color: rgb(102, 102, 102)"] {
 }
 
 /* Fix link colors */
-a[style*="color: #4a5568"],
+a[style*="color: #1877f2"],
 a[style*="color: rgb(24, 119, 242)"] {
     color: var(--text-link) !important;
 }
@@ -315,7 +315,7 @@ body.dark-mode input[type="range"] {
     text-align: center;
     padding: 100px 20px;
     color: white;
-    background: #4a5568;
+    background: #1877f2;
     min-height: 100vh;
     margin: -10px;
     display: flex;
