@@ -97,13 +97,70 @@ const Dashboard = () => {
         }
     };
 
-    // Function to clear all data from database and push to GitHub
+    // Function to delete only currently displayed listings
+    const deleteVisibleListings = async () => {
+        const currentListings = getFilteredListings();
+
+        if (currentListings.length === 0) {
+            alert('No listings to delete.');
+            return;
+        }
+
+        // Confirmation dialog
+        const isConfirmed = window.confirm(
+            `⚠️ Are you sure you want to delete ${currentListings.length} currently displayed listings?\n\n` +
+            "This action will delete only the listings that are currently visible based on your filters.\n\n" +
+            "This cannot be undone!"
+        );
+
+        if (!isConfirmed) return;
+
+        try {
+            // Show loading state
+            const clearButton = document.getElementById('clear-database-btn');
+            if (clearButton) {
+                clearButton.disabled = true;
+                clearButton.textContent = '🗑️ Deleting...';
+            }
+
+            console.log(`🗑️ Deleting ${currentListings.length} visible listings from Firebase...`);
+
+            // Delete each visible listing from Firebase
+            const deletePromises = currentListings.map(listing => {
+                const listingRef = firebase.database().ref(`phone_listings/${listing.id}`);
+                return listingRef.remove();
+            });
+
+            await Promise.all(deletePromises);
+
+            console.log(`✅ ${currentListings.length} listings deleted from Firebase`);
+
+            // Show success message
+            alert(`✅ Successfully deleted ${currentListings.length} listings!`);
+
+            // Refresh data
+            fetchData();
+
+        } catch (error) {
+            console.error('❌ Error deleting listings:', error);
+            alert('❌ Failed to delete listings. Please try again.');
+        } finally {
+            // Reset button state
+            const clearButton = document.getElementById('clear-database-btn');
+            if (clearButton) {
+                clearButton.disabled = false;
+                clearButton.textContent = '🗑️';
+            }
+        }
+    };
+
+    // Function to clear all data from database and push to GitHub (keeping original functionality)
     const clearDatabaseAndPushToGitHub = async () => {
         // Confirmation dialog
         const isConfirmed = window.confirm(
-            "⚠️ Are you sure you want to delete all phone listings from the database?\n\n" +
+            "⚠️ Are you sure you want to delete ALL phone listings from the database?\n\n" +
             "This action will:\n" +
-            "• Delete all listings from Firebase\n" +
+            "• Delete ALL listings from Firebase\n" +
             "• Commit the changes to GitHub\n" +
             "• Push the update to the remote repository\n\n" +
             "This cannot be undone!"
@@ -113,7 +170,7 @@ const Dashboard = () => {
 
         try {
             // Show loading state
-            const clearButton = document.getElementById('clear-database-btn');
+            const clearButton = document.getElementById('clear-all-database-btn');
             if (clearButton) {
                 clearButton.disabled = true;
                 clearButton.textContent = '🗑️ Clearing...';
@@ -143,7 +200,7 @@ const Dashboard = () => {
             alert('❌ Failed to clear database. Please try again.');
         } finally {
             // Reset button state
-            const clearButton = document.getElementById('clear-database-btn');
+            const clearButton = document.getElementById('clear-all-database-btn');
             if (clearButton) {
                 clearButton.disabled = false;
                 clearButton.textContent = '🗑️';
@@ -443,36 +500,78 @@ const Dashboard = () => {
                 </div>
             )}
 
-            
+  
             <section className="filters-section">
-                <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginBottom: '15px' }}>
-                    <button
-                        id="clear-database-btn"
-                        onClick={clearDatabaseAndPushToGitHub}
-                        style={{
-                            background: 'transparent',
-                            color: '#1877f2',
-                            border: '2px solid #1877f2',
-                            padding: '8px 16px',
-                            borderRadius: '6px',
-                            fontWeight: '600',
-                            cursor: 'pointer',
-                            transition: 'all 0.3s ease',
-                            fontSize: '0.9rem'
-                        }}
-                        onMouseOver={(e) => {
-                            e.target.style.background = '#1877f2';
-                            e.target.style.color = 'white';
-                            e.target.style.transform = 'translateY(-1px)';
-                        }}
-                        onMouseOut={(e) => {
-                            e.target.style.background = 'transparent';
-                            e.target.style.color = '#1877f2';
-                            e.target.style.transform = 'translateY(0)';
-                        }}
-                    >
-                        🗑️
-                    </button>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+                    {/* Results count display */}
+                    <div style={{
+                        fontSize: '0.9rem',
+                        color: '#666',
+                        fontWeight: '500'
+                    }}>
+                        Showing {filteredListings.length} results
+                    </div>
+
+                    {/* Delete buttons */}
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                        <button
+                            id="clear-database-btn"
+                            onClick={deleteVisibleListings}
+                            style={{
+                                background: 'transparent',
+                                color: '#ff4444',
+                                border: '2px solid #ff4444',
+                                padding: '8px 16px',
+                                borderRadius: '6px',
+                                fontWeight: '600',
+                                cursor: 'pointer',
+                                transition: 'all 0.3s ease',
+                                fontSize: '0.9rem'
+                            }}
+                            onMouseOver={(e) => {
+                                e.target.style.background = '#ff4444';
+                                e.target.style.color = 'white';
+                                e.target.style.transform = 'translateY(-1px)';
+                            }}
+                            onMouseOut={(e) => {
+                                e.target.style.background = 'transparent';
+                                e.target.style.color = '#ff4444';
+                                e.target.style.transform = 'translateY(0)';
+                            }}
+                            title="Delete currently visible listings"
+                        >
+                            🗑️ Delete {filteredListings.length}
+                        </button>
+
+                        <button
+                            id="clear-all-database-btn"
+                            onClick={clearDatabaseAndPushToGitHub}
+                            style={{
+                                background: 'transparent',
+                                color: '#1877f2',
+                                border: '2px solid #1877f2',
+                                padding: '8px 16px',
+                                borderRadius: '6px',
+                                fontWeight: '600',
+                                cursor: 'pointer',
+                                transition: 'all 0.3s ease',
+                                fontSize: '0.9rem'
+                            }}
+                            onMouseOver={(e) => {
+                                e.target.style.background = '#1877f2';
+                                e.target.style.color = 'white';
+                                e.target.style.transform = 'translateY(-1px)';
+                            }}
+                            onMouseOut={(e) => {
+                                e.target.style.background = 'transparent';
+                                e.target.style.color = '#1877f2';
+                                e.target.style.transform = 'translateY(0)';
+                            }}
+                            title="Delete ALL listings from database"
+                        >
+                            🗑️ Clear All
+                        </button>
+                    </div>
                 </div>
 
                 {/* Phone Model Tags */}
