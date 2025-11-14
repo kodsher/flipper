@@ -1387,7 +1387,7 @@ const Dashboard = () => {
                         onClick={() => setShowFavorites(!showFavorites)}
                         style={{
                             background: showFavorites ? '#ffc107' : '#1c2128',
-                            color: showFavorites ? '#f0f6fc' : '#333',
+                            color: showFavorites ? '#333' : '#333',
                             border: '2px solid #1877f2',
                             padding: '10px',
                             borderRadius: '50%',
@@ -1558,7 +1558,7 @@ const Dashboard = () => {
                                                 onClick={() => favoriteItem(listing.id)}
                                                 style={{
                                                     background: listing.favorited ? '#ffc107' : '#1c2128',
-                                                    color: listing.favorited ? '#f0f6fc' : '#666',
+                                                    color: listing.favorited ? '#333' : '#666',
                                                     border: '1px solid #1877f2',
                                                     borderRadius: '4px',
                                                     padding: '4px 8px',
