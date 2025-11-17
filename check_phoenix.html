@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Check Phoenix Listings</title>
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-database-compat.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; background: #f5f5f5; }
+        .container { max-width: 1000px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; }
+        .listing { border: 1px solid #ddd; margin: 10px 0; padding: 15px; border-radius: 5px; background: #f9f9f9; }
+        .no-listings { text-align: center; padding: 40px; color: #666; }
+        .title { font-weight: bold; margin-bottom: 10px; }
+        .details { color: #666; font-size: 0.9em; }
+        .highlight { background: #ffffcc; border: 1px solid #ffcc00; }
+        .loading { text-align: center; padding: 20px; }
+        .stats { background: #e3f2fd; padding: 15px; margin-bottom: 20px; border-radius: 5px; }
+        button { background: #4285f4; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Phoenix Listings Check</h1>
+
+        <div class="stats" id="stats">
+            <div class="loading">Loading database...</div>
+        </div>
+
+        <div>
+            <button onclick="checkPhoenix()">🔎 Check Phoenix Listings</button>
+            <button onclick="checkAllCities()">🏙️ Check All Cities</button>
+            <button onclick="clearResults()">🗑️ Clear Results</button>
+        </div>
+
+        <div id="results"></div>
+    </div>
+
+    <script>
+        // Firebase configuration - same as main app
+        const firebaseConfig = {
+            apiKey: "AIzaSyAJ788FI8Q_oU8GHJLTeW7t1cuTissy4Ss",
+            authDomain: "phone-flipping.firebaseapp.com",
+            databaseURL: "https://phone-flipping-default-rtdb.firebaseio.com",
+            projectId: "phone-flipping",
+            storageBucket: "phone-flipping.firebasestorage.app",
+            messagingSenderId: "523828027077",
+            appId: "1:523828027077:web:048a5003d81e6f3982daac"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        let allListings = [];
+        let totalListings = 0;
+
+        function displayStats() {
+            const statsDiv = document.getElementById('stats');
+            const cityCounts = {};
+
+            allListings.forEach(listing => {
+                const city = listing.search_city || 'Unknown';
+                cityCounts[city] = (cityCounts[city] || 0) + 1;
+            });
+
+            const phoenixCount = cityCounts['Phoenix'] || 0;
+            const cityList = Object.entries(cityCounts)
+                .sort((a, b) => b[1] - a[1])
+                .map(([city, count]) => `${city}: ${count}`)
+                .join(', ');
+
+            statsDiv.innerHTML = `
+                <div><strong>📊 Total Listings:</strong> ${totalListings}</div>
+                <div><strong>🏙️ Cities Found (${Object.keys(cityCounts).length}):</strong> ${cityList}</div>
+                <div><strong>🌵 Phoenix Listings:</strong> <span style="color: ${phoenixCount > 0 ? 'red' : 'green'}; font-weight: bold;">${phoenixCount}</span></div>
+            `;
+        }
+
+        function checkPhoenix() {
+            const resultsDiv = document.getElementById('results');
+            const phoenixListings = allListings.filter(listing => listing.search_city === 'Phoenix');
+
+            console.log('🔍 Phoenix search results:', phoenixListings);
+            console.log('🏙️ All cities found:', [...new Set(allListings.map(l => l.search_city).filter(Boolean))]);
+
+            if (phoenixListings.length === 0) {
+                resultsDiv.innerHTML = '<div class="no-listings"><h2>❌ No Phoenix listings found in database!</h2><p>But the Phoenix tag is still showing in the main app, which suggests a bug.</p></div>';
+            } else {
+                resultsDiv.innerHTML = `
+                    <h2>🌵 Found ${phoenixListings.length} Phoenix Listings:</h2>
+                    ${phoenixListings.map(listing => `
+                        <div class="listing highlight">
+                            <div class="title">${listing.title}</div>
+                            <div class="details">
+                                <strong>Model:</strong> ${listing.model || 'Unknown'}<br>
+                                <strong>Price:</strong> $${listing.price || 'Unknown'}<br>
+                                <strong>Date:</strong> ${listing.date || 'Unknown'}<br>
+                                <strong>ID:</strong> ${listing.id}
+                            </div>
+                        </div>
+                    `).join('')}
+                `;
+            }
+        }
+
+        function checkAllCities() {
+            const cityCounts = {};
+            allListings.forEach(listing => {
+                const city = listing.search_city || 'Unknown';
+                cityCounts[city] = (cityCounts[city] || 0) + 1;
+            });
+
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = `
+                <h2>🏙️ All Cities in Database:</h2>
+                ${Object.entries(cityCounts)
+                    .sort((a, b) => b[1] - a[1])
+                    .map(([city, count]) => `
+                        <div class="listing">
+                            <div class="title">${city} (${count} listings)</div>
+                        </div>
+                    `).join('')}
+            `;
+        }
+
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+        }
+
+        // Load all listings from database
+        database.ref('phone_listings').once('value', (snapshot) => {
+            const data = snapshot.val();
+            if (data) {
+                allListings = Object.values(data);
+                totalListings = allListings.length;
+                console.log('📊 Loaded', totalListings, 'listings from database');
+                console.log('🔍 Sample listing:', allListings[0]);
+                displayStats();
+            } else {
+                document.getElementById('stats').innerHTML = '<div style="color: red;">❌ No data found in database!</div>';
+            }
+        }).catch((error) => {
+            console.error('❌ Error loading data:', error);
+            document.getElementById('stats').innerHTML = `<div style="color: red;">❌ Error loading data: ${error.message}</div>`;
+        });
+    </script>
+</body>
+</html>

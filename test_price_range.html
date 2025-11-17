@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Price Range Feature</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #0d1117;
+            color: #f0f6fc;
+            padding: 40px;
+        }
+
+        .demo-section {
+            background: #1c2128;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        h2 {
+            color: #1877f2;
+            margin-bottom: 20px;
+        }
+
+        /* Use the same styles from our main application */
+        .generation-tag {
+            position: relative;
+            overflow: visible;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            font-size: 0.85rem;
+            padding: 6px 12px;
+            background: #1c2128;
+            color: #333;
+            border: 2px solid #1877f2;
+            border-radius: 20px;
+            font-weight: 600;
+            cursor: pointer;
+            margin: 4px;
+            display: inline-block;
+        }
+
+        .generation-tag .edit-pencil {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: #ffc107;
+            color: #333;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            cursor: pointer;
+            z-index: 10;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+            border: 2px solid white;
+        }
+
+        .generation-tag:hover .edit-pencil {
+            display: flex;
+        }
+
+        .generation-tag .edit-pencil:hover {
+            transform: scale(1.1);
+            background: #ffb300;
+            box-shadow: 0 4px 12px rgba(255, 193, 7, 0.4);
+        }
+
+        .price-range-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(4px);
+        }
+
+        .price-range-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .price-range-modal {
+            background: #161b22;
+            border-radius: 16px;
+            padding: 32px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+            border: 1px solid #30363d;
+            transform: scale(0.9) translateY(20px);
+            transition: all 0.3s ease;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .price-range-overlay.active .price-range-modal {
+            transform: scale(1) translateY(0);
+        }
+
+        .price-range-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .price-range-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #b1b7bd;
+            margin: 0;
+        }
+
+        .price-range-subtitle {
+            font-size: 0.9rem;
+            color: #8b949e;
+            margin-top: 8px;
+        }
+
+        .close-button {
+            background: none;
+            border: none;
+            color: #8b949e;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 50%;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+        }
+
+        .close-button:hover {
+            background: #21262d;
+            color: #b1b7bd;
+            transform: scale(1.1);
+        }
+
+        .form-group label {
+            font-weight: 600;
+            color: #8b949e;
+            font-size: 0.9rem;
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        .price-inputs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .price-input input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #30363d;
+            border-radius: 8px;
+            font-size: 1rem;
+            background: #0d1117;
+            color: #b1b7bd;
+            transition: all 0.2s ease;
+        }
+
+        .price-input input:focus {
+            outline: none;
+            border-color: #1877f2;
+            box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.1);
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+            margin-top: 24px;
+        }
+
+        .btn-save, .btn-cancel {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.9rem;
+        }
+
+        .btn-save {
+            background: #1877f2;
+            color: white;
+        }
+
+        .btn-save:hover {
+            background: #1f6feb;
+            transform: translateY(-1px);
+        }
+
+        .btn-cancel {
+            background: #21262d;
+            color: #8b949e;
+            border: 2px solid #30363d;
+        }
+
+        .btn-cancel:hover {
+            background: #30363d;
+            color: #b1b7bd;
+            border-color: #1877f2;
+        }
+
+        .description {
+            color: #8b949e;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-section">
+        <h2>✏️ Price Range Editing Feature Test</h2>
+        <p class="description">
+            This demo shows the hover effect with pencil emoji on iPhone generation tags.
+            Hover over any iPhone generation tag below to see the pencil emoji appear in the top-right corner.
+            Click the pencil to open the price range popup.
+        </p>
+
+        <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px;">
+            <button class="generation-tag">
+                iPhone 17 (42)
+                <span class="edit-pencil" onclick="openPopup('17')" title="Set price range for iPhone 17">✏️</span>
+            </button>
+            <button class="generation-tag">
+                iPhone 16 (156)
+                <span class="edit-pencil" onclick="openPopup('16')" title="Set price range for iPhone 16">✏️</span>
+            </button>
+            <button class="generation-tag">
+                iPhone 15 (234)
+                <span class="edit-pencil" onclick="openPopup('15')" title="Set price range for iPhone 15">✏️</span>
+            </button>
+            <button class="generation-tag">
+                iPhone 14 (189)
+                <span class="edit-pencil" onclick="openPopup('14')" title="Set price range for iPhone 14">✏️</span>
+            </button>
+            <button class="generation-tag">
+                Older (67)
+                <span class="edit-pencil" onclick="openPopup('older')" title="Set price range for iPhone Older">✏️</span>
+            </button>
+        </div>
+
+        <p class="description">
+            <strong>Note:</strong> This feature only applies to iPhone generation tags (17, 16, 15, 14, older).
+            Other tag types like cities, time frames, or device types will not have the pencil emoji.
+        </p>
+    </div>
+
+    <!-- Price Range Popup Overlay -->
+    <div id="priceRangePopup" class="price-range-overlay" onclick="closePopup()">
+        <div class="price-range-modal" onclick="(e) => e.stopPropagation()">
+            <div class="price-range-header">
+                <div>
+                    <h2 class="price-range-title">Set Price Range</h2>
+                    <p class="price-range-subtitle" id="generationName">iPhone Generation</p>
+                </div>
+                <button class="close-button" onclick="closePopup()">×</button>
+            </div>
+
+            <div class="price-range-form">
+                <div class="form-group">
+                    <label>Price Range ($)</label>
+                    <div class="price-inputs">
+                        <div class="price-input">
+                            <label for="min-price">Minimum</label>
+                            <input id="min-price" type="text" placeholder="Min price" />
+                        </div>
+                        <div class="price-input">
+                            <label for="max-price">Maximum</label>
+                            <input id="max-price" type="text" placeholder="Max price" />
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button class="btn-cancel" onclick="closePopup()">Cancel</button>
+                    <button class="btn-save" onclick="savePriceRange()">Save Price Range</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentGeneration = '';
+        const generationPriceRanges = {};
+
+        function openPopup(generation) {
+            currentGeneration = generation;
+            document.getElementById('generationName').textContent =
+                `iPhone ${generation.charAt(0).toUpperCase() + generation.slice(1)}`;
+
+            const currentRange = generationPriceRanges[generation] || { min: '', max: '' };
+            document.getElementById('min-price').value = currentRange.min;
+            document.getElementById('max-price').value = currentRange.max;
+
+            document.getElementById('priceRangePopup').classList.add('active');
+        }
+
+        function closePopup() {
+            document.getElementById('priceRangePopup').classList.remove('active');
+            currentGeneration = '';
+        }
+
+        function savePriceRange() {
+            if (currentGeneration) {
+                const minPrice = document.getElementById('min-price').value.replace(/[^0-9]/g, '');
+                const maxPrice = document.getElementById('max-price').value.replace(/[^0-9]/g, '');
+
+                generationPriceRanges[currentGeneration] = {
+                    min: minPrice,
+                    max: maxPrice
+                };
+
+                console.log(`Price range saved for iPhone ${currentGeneration}:`, generationPriceRanges[currentGeneration]);
+                alert(`Price range saved for iPhone ${currentGeneration}!\nMin: $${minPrice || 'Any'}\nMax: $${maxPrice || 'Any'}`);
+                closePopup();
+            }
+        }
+
+        // Handle number-only input
+        document.getElementById('min-price').addEventListener('input', function(e) {
+            e.target.value = e.target.value.replace(/[^0-9]/g, '');
+        });
+
+        document.getElementById('max-price').addEventListener('input', function(e) {
+            e.target.value = e.target.value.replace(/[^0-9]/g, '');
+        });
+    </script>
+</body>
+</html>

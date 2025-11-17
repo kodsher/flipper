@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Filtering</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .listing {
+            background: white;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border-left: 4px solid #ddd;
+        }
+        .match {
+            border-left-color: #4caf50;
+        }
+        .no-match {
+            border-left-color: #f44336;
+        }
+        .controls {
+            background: white;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        button {
+            background: #1877f2;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #1565c0;
+        }
+        button.selected {
+            background: #4caf50;
+        }
+        .selected-tags {
+            margin-top: 10px;
+        }
+        .tag {
+            display: inline-block;
+            background: #e3f2fd;
+            color: #1877f2;
+            padding: 5px 10px;
+            border-radius: 4px;
+            margin: 2px;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 Debug iPhone Filtering</h1>
+
+    <div class="controls">
+        <h3>Select Filters:</h3>
+        <div>
+            <strong>Models:</strong>
+            <button id="model-iphone" onclick="toggleModel('iphone')">iPhone</button>
+            <div id="selected-models" class="selected-tags"></div>
+        </div>
+        <div style="margin-top: 15px;">
+            <strong>Generations:</strong>
+            <button id="gen-17" onclick="toggleGeneration('17')">17</button>
+            <button id="gen-16" onclick="toggleGeneration('16')">16</button>
+            <button id="gen-15" onclick="toggleGeneration('15')">15</button>
+            <button id="gen-14" onclick="toggleGeneration('14')">14</button>
+            <button id="gen-older" onclick="toggleGeneration('older')">Older</button>
+            <div id="selected-generations" class="selected-tags"></div>
+        </div>
+        <div style="margin-top: 15px;">
+            <strong>Variants:</strong>
+            <button id="var-17" onclick="toggleVariant('17')">17</button>
+            <button id="var-17_pro" onclick="toggleVariant('17_pro')">17 Pro</button>
+            <button id="var-17_pro_max" onclick="toggleVariant('17_pro_max')">17 Pro Max</button>
+            <button id="var-17_air" onclick="toggleVariant('17_air')">17 Air</button>
+            <button id="var-16" onclick="toggleVariant('16')">16</button>
+            <button id="var-16_pro" onclick="toggleVariant('16_pro')">16 Pro</button>
+            <button id="var-16_pro_max" onclick="toggleVariant('16_pro_max')">16 Pro Max</button>
+            <button id="var-16_plus" onclick="toggleVariant('16_plus')">16 Plus</button>
+            <button id="var-16_16e" onclick="toggleVariant('16_16e')">16e</button>
+            <button id="var-older_model" onclick="toggleVariant('older_model')">Older Model</button>
+            <div id="selected-variants" class="selected-tags"></div>
+        </div>
+        <button onclick="filterListings()" style="background: #4caf50;">🔍 Apply Filters</button>
+    </div>
+
+    <h3>Results:</h3>
+    <div id="results"></div>
+
+    <script src="firebase-config.js"></script>
+    <script>
+        // Initialize Firebase
+        const firebaseConfig = {
+            databaseURL: "https://phone-flipping-default-rtdb.firebaseio.com/",
+            apiKey: "AIzaSyD0Z3tQrP2YcGj3xRxBpHzHhEwC_VP6u_Q"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        let selectedModels = ['all'];
+        let selectedGenerations = ['all'];
+        let selectedVariants = [];
+        let allListings = [];
+
+        function toggleModel(model) {
+            const btn = document.getElementById(`model-${model}`);
+
+            if (model === 'all') {
+                selectedModels = ['all'];
+                // Uncheck all other model buttons
+                document.querySelectorAll('[id^="model-"]').forEach(b => {
+                    if (b.id !== 'model-all') b.classList.remove('selected');
+                });
+            } else {
+                btn.classList.toggle('selected');
+
+                if (selectedModels.includes('all') || btn.classList.contains('selected')) {
+                    selectedModels = [model];
+                    document.querySelectorAll('[id^="model-"]').forEach(b => {
+                        if (b.id !== `model-${model}`) b.classList.remove('selected');
+                    });
+                } else {
+                    selectedModels.push(model);
+                }
+            }
+
+            updateSelectedDisplay();
+        }
+
+        function toggleGeneration(gen) {
+            const btn = document.getElementById(`gen-${gen}`);
+            btn.classList.toggle('selected');
+
+            if (gen === 'all') {
+                selectedGenerations = ['all'];
+                document.querySelectorAll('[id^="gen-"]').forEach(b => {
+                    if (b.id !== 'gen-all') b.classList.remove('selected');
+                });
+            } else {
+                if (btn.classList.contains('selected')) {
+                    selectedGenerations = selectedGenerations.filter(g => g !== 'all');
+                } else {
+                    selectedGenerations = selectedGenerations.filter(g => g !== 'all');
+                    selectedGenerations.push(gen);
+                }
+            }
+
+            updateSelectedDisplay();
+        }
+
+        function toggleVariant(variant) {
+            const btn = document.getElementById(`var-${variant}`);
+            btn.classList.toggle('selected');
+
+            if (btn.classList.contains('selected')) {
+                if (!selectedVariants.includes(variant)) {
+                    selectedVariants.push(variant);
+                }
+            } else {
+                selectedVariants = selectedVariants.filter(v => v !== variant);
+            }
+
+            updateSelectedDisplay();
+        }
+
+        function updateSelectedDisplay() {
+            document.getElementById('selected-models').innerHTML = selectedModels.map(m =>
+                `<span class="tag">${m}</span>`
+            ).join(' ');
+
+            document.getElementById('selected-generations').innerHTML = selectedGenerations.map(g =>
+                `<span class="tag">${g}</span>`
+            ).join(' ');
+
+            document.getElementById('selected-variants').innerHTML = selectedVariants.map(v =>
+                `<span class="tag">${v}</span>`
+            ).join(' ');
+        }
+
+        function loadData() {
+            console.log('📥 Loading listings from Firebase...');
+
+            database.ref('phone_listings').once('value')
+                .then((snapshot) => {
+                    const data = snapshot.val();
+                    if (data) {
+                        allListings = Object.keys(data).map(key => ({
+                            id: key,
+                            ...data[key]
+                        }));
+                        console.log(`✅ Loaded ${allListings.length} listings`);
+                        filterListings();
+                    }
+                })
+                .catch((error) => {
+                    console.error('❌ Error loading data:', error);
+                    document.getElementById('results').innerHTML = `<p style="color: red;">❌ Error loading data: ${error.message}</p>`;
+                });
+        }
+
+        function filterListings() {
+            console.log('🔍 Filtering...');
+            console.log('Selected Models:', selectedModels);
+            console.log('Selected Generations:', selectedGenerations);
+            console.log('Selected Variants:', selectedVariants);
+
+            let filtered = [...allListings];
+
+            // Combined filtering logic - ALL conditions must be met for iPhones
+            filtered = filtered.filter(listing => {
+                const model = (listing.model || '').toLowerCase();
+                const variant = listing.variant || '';
+                const isIphone = model.includes('iphone');
+
+                // For non-iPhones, only check model filter
+                if (!isIphone) {
+                    if (selectedModels.includes('all')) {
+                        return true;
+                    }
+                    return selectedModels.some(selectedModel => {
+                        if (selectedModel === 'iphone') {
+                            return false; // Not asking for iPhones specifically
+                        }
+                        return model.includes(selectedModel);
+                    });
+                }
+
+                // For iPhones, check all relevant filters with AND logic
+                let passesGenerationFilter = true;
+                let passesVariantFilter = true;
+
+                // Check generation filter
+                if (!selectedGenerations.includes('all')) {
+                    passesGenerationFilter = selectedGenerations.some(selectedGeneration => {
+                        if (selectedGeneration === 'older') {
+                            return !model.includes('17') && !model.includes('16') && !model.includes('15') && !model.includes('14');
+                        } else {
+                            return model.includes(selectedGeneration);
+                        }
+                    });
+                }
+
+                // Check variant filter - CRITICAL: iPhone MUST have variant data if variants are selected
+                if (selectedVariants.length > 0) {
+                    if (!variant) {
+                        console.log(`❌ ${listing.title} - iPhone but no variant data`);
+                        return false;
+                    }
+                    passesVariantFilter = selectedVariants.some(selectedVariant => {
+                        const match = variant === selectedVariant;
+                        if (!match) {
+                            console.log(`❌ ${listing.title} - variant ${variant} ≠ selected ${selectedVariant}`);
+                        }
+                        return match;
+                    });
+                }
+
+                const passesAllFilters = passesGenerationFilter && passesVariantFilter;
+                if (isIphone && (selectedGenerations.length > 1 || !selectedGenerations.includes('all') || selectedVariants.length > 0)) {
+                    console.log(`📱 ${listing.title}`);
+                    console.log(`   Generation filter: ${passesGenerationFilter}`);
+                    console.log(`   Variant filter: ${passesVariantFilter}`);
+                    console.log(`   Final result: ${passesAllFilters ? '✅ INCLUDED' : '❌ EXCLUDED'}`);
+                }
+
+                return passesAllFilters;
+            });
+
+            console.log(`🎯 Final result: ${filtered.length} listings pass all filters`);
+            displayResults(filtered);
+        }
+
+        function displayResults(listings) {
+            const resultsDiv = document.getElementById('results');
+
+            if (listings.length === 0) {
+                resultsDiv.innerHTML = '<p>No listings match your filters</p>';
+                return;
+            }
+
+            const html = listings.map(listing => {
+                const isMatch = listings.indexOf(listing) < listings.indexOf(listings[0]); // First 10 matches
+                const matchClass = isMatch ? 'match' : 'no-match';
+
+                return `
+                    <div class="listing ${matchClass}">
+                        <div><strong>${listing.title}</strong></div>
+                        <div>Model: ${listing.model || 'None'}</div>
+                        <div>Variant: ${listing.variant || 'None'}</div>
+                        <div>Price: $${listing.price || 'N/A'}</div>
+                        <div>Location: ${listing.location || 'N/A'}</div>
+                    </div>
+                `;
+            }).join('');
+
+            resultsDiv.innerHTML = html + `<p style="margin-top: 20px;">Showing ${listings.length} of ${allListings.length} listings</p>`;
+        }
+
+        // Auto-load data
+        window.onload = () => {
+            loadData();
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Database Inspector</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .listing {
+            background: white;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border-left: 4px solid #ccc;
+        }
+        .listing.has-variant {
+            border-left-color: #1877f2;
+        }
+        .title {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 8px;
+        }
+        .model {
+            color: #666;
+            font-size: 0.9rem;
+        }
+        .variant {
+            color: #1877f2;
+            font-weight: bold;
+            background: #e3f2fd;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+        }
+        .no-variant {
+            color: #999;
+            font-style: italic;
+            font-size: 0.8rem;
+        }
+        .controls {
+            background: white;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        button {
+            background: #1877f2;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        button:hover {
+            background: #1565c0;
+        }
+        .stats {
+            background: white;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .stats-item {
+            display: inline-block;
+            margin-right: 20px;
+            font-weight: bold;
+        }
+        .filter-box {
+            margin: 10px 0;
+        }
+        input[type="text"] {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            width: 300px;
+        }
+    </style>
+</head>
+<body>
+    <h1>📊 Database Inspector - iPhone Variant Data</h1>
+
+    <div class="controls">
+        <button onclick="loadData()">🔄 Load Data</button>
+        <button onclick="updateMissingVariants()">🔧 Update Missing Variants</button>
+
+        <div class="filter-box">
+            <input type="text" id="searchInput" placeholder="Search titles (e.g., 'iphone 16 pro max')" onkeyup="filterListings()">
+            <button onclick="filterListings()">🔍 Search</button>
+        </div>
+    </div>
+
+    <div class="stats" id="stats">
+        Loading stats...
+    </div>
+
+    <div id="listings">
+        Click "Load Data" to fetch listings from database
+    </div>
+
+    <script src="firebase-config.js"></script>
+    <script>
+        let allListings = [];
+
+        // Load Firebase config
+        const firebaseConfig = {
+            databaseURL: "https://phone-flipping-default-rtdb.firebaseio.com/",
+            apiKey: "AIzaSyD0Z3tQrP2YcGj3xRxBpHzHhEwC_VP6u_Q"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        function detectiPhoneVariant(title) {
+            if (!title) return null;
+
+            const lowerTitle = title.toLowerCase();
+
+            // iPhone 17 variants
+            if (lowerTitle.includes('iphone 17')) {
+                if (lowerTitle.includes('pro max') || lowerTitle.includes('17 pro max')) return '17_pro_max';
+                if (lowerTitle.includes('pro') || lowerTitle.includes('17 pro')) return '17_pro';
+                if (lowerTitle.includes('air') || lowerTitle.includes('17 air')) return '17_air';
+            }
+
+            // iPhone 16 variants
+            if (lowerTitle.includes('iphone 16')) {
+                if (lowerTitle.includes('pro max') || lowerTitle.includes('16 pro max')) return '16_pro_max';
+                if (lowerTitle.includes('pro') || lowerTitle.includes('16 pro')) return '16_pro';
+                if (lowerTitle.includes('plus') || lowerTitle.includes('16 plus')) return '16_plus';
+                if (lowerTitle.includes('16e') || lowerTitle.includes('16 e')) return '16_16e';
+            }
+
+            // iPhone 15 variants
+            if (lowerTitle.includes('iphone 15')) {
+                if (lowerTitle.includes('pro max') || lowerTitle.includes('15 pro max')) return '15_pro_max';
+                if (lowerTitle.includes('pro') || lowerTitle.includes('15 pro')) return '15_pro';
+                if (lowerTitle.includes('plus') || lowerTitle.includes('15 plus')) return '15_plus';
+            }
+
+            // iPhone 14 variants
+            if (lowerTitle.includes('iphone 14')) {
+                if (lowerTitle.includes('pro max') || lowerTitle.includes('14 pro max')) return '14_pro_max';
+                if (lowerTitle.includes('pro') || lowerTitle.includes('14 pro')) return '14_pro';
+                if (lowerTitle.includes('plus') || lowerTitle.includes('14 plus')) return '14_plus';
+            }
+
+            return null;
+        }
+
+        function loadData() {
+            console.log('🔄 Loading data from Firebase...');
+
+            database.ref('phone_listings').once('value')
+                .then((snapshot) => {
+                    const data = snapshot.val();
+                    allListings = Object.keys(data).map(key => ({
+                        id: key,
+                        ...data[key]
+                    }));
+
+                    console.log(`✅ Loaded ${allListings.length} listings`);
+                    displayListings(allListings);
+                    updateStats(allListings);
+                })
+                .catch((error) => {
+                    console.error('❌ Error loading data:', error);
+                    document.getElementById('listings').innerHTML = `<p style="color: red;">❌ Error loading data: ${error.message}</p>`;
+                });
+        }
+
+        function displayListings(listings) {
+            const listingsDiv = document.getElementById('listings');
+
+            if (listings.length === 0) {
+                listingsDiv.innerHTML = '<p>No listings found</p>';
+                return;
+            }
+
+            const html = listings.map(listing => {
+                const variant = listing.variant || detectiPhoneVariant(listing.title);
+                const hasVariant = variant !== null;
+
+                return `
+                    <div class="listing ${hasVariant ? 'has-variant' : ''}">
+                        <div class="title">${listing.title}</div>
+                        <div class="model">Model: ${listing.model || 'Not detected'}</div>
+                        <div>
+                            Variant:
+                            ${variant ?
+                                `<span class="variant">${variant}</span>` :
+                                `<span class="no-variant">No variant detected</span>`
+                            }
+                            ${listing.variant ?
+                                ` <small style="color: green;">(saved in DB)</small>` :
+                                ` <small style="color: orange;">(not saved)</small>`
+                            }
+                        </div>
+                        <div style="font-size: 0.8rem; color: #999; margin-top: 8px;">
+                            Price: $${listing.price || 'N/A'} |
+                            Location: ${listing.location || 'N/A'} |
+                            ID: ${listing.id}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            listingsDiv.innerHTML = html;
+        }
+
+        function updateStats(listings) {
+            const totalListings = listings.length;
+            const iphoneListings = listings.filter(l => l.model && l.model.toLowerCase().includes('iphone')).length;
+            const withVariantDB = listings.filter(l => l.variant).length;
+            const withVariantDetected = listings.filter(l => detectiPhoneVariant(l.title)).length;
+
+            document.getElementById('stats').innerHTML = `
+                <div class="stats-item">Total Listings: ${totalListings}</div>
+                <div class="stats-item">iPhone Listings: ${iphoneListings}</div>
+                <div class="stats-item">With Variant (DB): ${withVariantDB}</div>
+                <div class="stats-item">With Variant (Detected): ${withVariantDetected}</div>
+                <div class="stats-item">Missing Variants: ${withVariantDetected - withVariantDB}</div>
+            `;
+        }
+
+        function filterListings() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+
+            if (!searchTerm) {
+                displayListings(allListings);
+                return;
+            }
+
+            const filtered = allListings.filter(listing =>
+                listing.title.toLowerCase().includes(searchTerm)
+            );
+
+            displayListings(filtered);
+        }
+
+        function updateMissingVariants() {
+            console.log('🔧 Updating missing variants...');
+
+            const updates = {};
+            let updateCount = 0;
+
+            allListings.forEach(listing => {
+                const detectedVariant = detectiPhoneVariant(listing.title);
+
+                if (detectedVariant && !listing.variant) {
+                    updates[`phone_listings/${listing.id}/variant`] = detectedVariant;
+                    updateCount++;
+                    console.log(`➕ Adding variant ${detectedVariant} to: ${listing.title}`);
+                }
+            });
+
+            if (Object.keys(updates).length > 0) {
+                database.ref().update(updates)
+                    .then(() => {
+                        console.log(`✅ Updated ${updateCount} listings with variant data`);
+                        alert(`✅ Successfully updated ${updateCount} listings with variant data!\n\nPlease click "Load Data" to refresh.`);
+                        loadData();
+                    })
+                    .catch((error) => {
+                        console.error('❌ Error updating variants:', error);
+                        alert(`❌ Error updating variants: ${error.message}`);
+                    });
+            } else {
+                alert('✅ All listings already have variant data or no variants to add!');
+            }
+        }
+
+        // Auto-load data on page load
+        window.onload = () => {
+            loadData();
+        };
+    </script>
+</body>
+</html>

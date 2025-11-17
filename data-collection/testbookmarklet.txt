@@ -1,10 +1,15 @@
 javascript:(()=>{
     let rows=[["Price","Title","Location","Link"]];
     let seen=new Set();
-    let scrolls=0,maxScrolls=2,delay=1000;
+    let scrolls=0, maxScrolls=1, delay=2000;
 
     function abs(u){
         try{return new URL(u,location.origin).href}catch{return u}
+    }
+
+    function getCity(){
+        let match=location.pathname.match(/\/marketplace\/([^\/]+)/);
+        return match?match[1]:"unknown"
     }
 
     function scrape(){
@@ -14,7 +19,8 @@ javascript:(()=>{
                 let priceEl=c[0].querySelector('span[dir="auto"]');
                 let p=priceEl?priceEl.textContent.trim():"";
                 if(p.startsWith("$")){
-                    let t=c[1].innerText.trim(),l=c[2].innerText.trim();
+                    let t=c[1].innerText.trim(),
+                        l=c[2].innerText.trim();
                     let a=e.closest("a");
                     let link=a?abs(a.getAttribute("href")||""):"";
                     let key=p+t+l+link;
@@ -29,11 +35,12 @@ javascript:(()=>{
 
     function dl(){
         let count=rows.length-1;
+        let city=getCity();
         let csv=rows.map(r=>r.map(x=>`"${x.replace(/"/g,'""')}"`).join(",")).join("\n");
         let a=document.createElement("a");
         a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"}));
-        a.download=`${count}_listings.csv`;
-        a.click();
+        a.download=`${city}${count}.csv`;
+        a.click()
     }
 
     function step(){
@@ -41,18 +48,12 @@ javascript:(()=>{
         window.scrollBy(0,document.body.scrollHeight);
         scrolls++;
         if(scrolls<maxScrolls){
-            setTimeout(step,delay);
+            setTimeout(step,delay)
         }else{
             scrape();
-            dl();
-
-            // Wait 5 seconds, then refresh page and repeat
-            setTimeout(() => {
-                console.log("🔄 Refreshing page to continue scraping...");
-                location.reload();
-            }, 5000);
+            dl()
         }
     }
 
-    step();
+    step()
 })();

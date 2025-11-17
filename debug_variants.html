@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Variant System Debug</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        button {
+            background: #1877f2;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #1565c0;
+        }
+        .listing {
+            background: #f9f9f9;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            border-left: 4px solid #ddd;
+        }
+        .listing.has-variant {
+            border-left-color: #1877f2;
+        }
+        .variant {
+            background: #e3f2fd;
+            color: #1877f2;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+        .result {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .success {
+            background: #e8f5e8;
+            border: 1px solid #4caf50;
+            color: #2e7d32;
+        }
+        .error {
+            background: #ffebee;
+            border: 1px solid #f44336;
+            color: #c62828;
+        }
+        .info {
+            background: #e3f2fd;
+            border: 1px solid #2196f3;
+            color: #1565c0;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 iPhone Variant System Debug</h1>
+
+    <div class="section">
+        <h2>1️⃣ Test Database Connection</h2>
+        <button onclick="testDatabaseConnection()">Test Connection</button>
+        <div id="connection-result"></div>
+    </div>
+
+    <div class="section">
+        <h2>2️⃣ Check Existing Data</h2>
+        <button onclick="loadSampleListings()">Load Sample Listings</button>
+        <div id="sample-listings"></div>
+    </div>
+
+    <div class="section">
+        <h2>3️⃣ Manually Add Variant Data</h2>
+        <p>This will add variant data to a few iPhone listings that should have variants:</p>
+        <button onclick="addTestVariants()">Add Test Variants</button>
+        <div id="variant-result"></div>
+    </div>
+
+    <div class="section">
+        <h2>4️⃣ Test Variant Filtering</h2>
+        <button onclick="testFiltering()">Test Variant Filtering</button>
+        <div id="filtering-result"></div>
+    </div>
+
+    <script src="firebase-config.js"></script>
+    <script>
+        // Initialize Firebase
+        const firebaseConfig = {
+            databaseURL: "https://phone-flipping-default-rtdb.firebaseio.com/",
+            apiKey: "AIzaSyD0Z3tQrP2YcGj3xRxBpHzHhEwC_VP6u_Q"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        function showResult(elementId, message, type = 'info') {
+            const element = document.getElementById(elementId);
+            element.innerHTML = `<div class="result ${type}">${message}</div>`;
+        }
+
+        function testDatabaseConnection() {
+            showResult('connection-result', 'Testing connection...', 'info');
+
+            database.ref('.info/connected').once('value')
+                .then((snapshot) => {
+                    const connected = snapshot.val();
+                    if (connected) {
+                        showResult('connection-result', '✅ Database connection successful!', 'success');
+                    } else {
+                        showResult('connection-result', '❌ Database connection failed', 'error');
+                    }
+                })
+                .catch((error) => {
+                    showResult('connection-result', `❌ Connection error: ${error.message}`, 'error');
+                });
+        }
+
+        function loadSampleListings() {
+            showResult('sample-listings', 'Loading sample listings...', 'info');
+
+            database.ref('phone_listings')
+                .orderByChild('model')
+                .startAt('iPhone')
+                .endAt('iPhone\uF8FF')
+                .limitToFirst(10)
+                .once('value')
+                .then((snapshot) => {
+                    const data = snapshot.val();
+                    const listings = Object.keys(data).map(key => ({
+                        id: key,
+                        ...data[key]
+                    }));
+
+                    console.log('📊 Sample listings:', listings);
+
+                    const html = listings.map(listing => `
+                        <div class="listing ${listing.variant ? 'has-variant' : ''}">
+                            <strong>${listing.title}</strong><br>
+                            Model: ${listing.model || 'None'}<br>
+                            Variant: ${listing.variant ? `<span class="variant">${listing.variant}</span>` : '<em>None</em>'}<br>
+                            Price: $${listing.price || 'N/A'}<br>
+                            ID: ${listing.id}
+                        </div>
+                    `).join('');
+
+                    document.getElementById('sample-listings').innerHTML = html;
+                    showResult('sample-listings', `✅ Loaded ${listings.length} iPhone listings`, 'success');
+                })
+                .catch((error) => {
+                    showResult('sample-listings', `❌ Error loading listings: ${error.message}`, 'error');
+                });
+        }
+
+        function detectiPhoneVariant(title) {
+            if (!title) return null;
+
+            const lowerTitle = title.toLowerCase();
+
+            // iPhone 16 variants
+            if (lowerTitle.includes('iphone 16')) {
+                if (lowerTitle.includes('pro max') || lowerTitle.includes('16 pro max')) return '16_pro_max';
+                if (lowerTitle.includes('pro') || lowerTitle.includes('16 pro')) return '16_pro';
+                if (lowerTitle.includes('plus') || lowerTitle.includes('16 plus')) return '16_plus';
+                if (lowerTitle.includes('16e') || lowerTitle.includes('16 e')) return '16_16e';
+            }
+
+            // iPhone 15 variants
+            if (lowerTitle.includes('iphone 15')) {
+                if (lowerTitle.includes('pro max') || lowerTitle.includes('15 pro max')) return '15_pro_max';
+                if (lowerTitle.includes('pro') || lowerTitle.includes('15 pro')) return '15_pro';
+                if (lowerTitle.includes('plus') || lowerTitle.includes('15 plus')) return '15_plus';
+            }
+
+            // iPhone 14 variants
+            if (lowerTitle.includes('iphone 14')) {
+                if (lowerTitle.includes('pro max') || lowerTitle.includes('14 pro max')) return '14_pro_max';
+                if (lowerTitle.includes('pro') || lowerTitle.includes('14 pro')) return '14_pro';
+                if (lowerTitle.includes('plus') || lowerTitle.includes('14 plus')) return '14_plus';
+            }
+
+            return null;
+        }
+
+        function addTestVariants() {
+            showResult('variant-result', 'Finding iPhone listings without variants...', 'info');
+
+            database.ref('phone_listings')
+                .orderByChild('model')
+                .startAt('iPhone')
+                .endAt('iPhone\uF8FF')
+                .limitToFirst(20)
+                .once('value')
+                .then((snapshot) => {
+                    const data = snapshot.val();
+                    const listings = Object.keys(data).map(key => ({
+                        id: key,
+                        ...data[key]
+                    }));
+
+                    const updates = {};
+                    let updateCount = 0;
+
+                    listings.forEach(listing => {
+                        if (!listing.variant) {
+                            const detectedVariant = detectiPhoneVariant(listing.title);
+                            if (detectedVariant) {
+                                updates[`phone_listings/${listing.id}/variant`] = detectedVariant;
+                                updateCount++;
+                                console.log(`🔧 Adding variant ${detectedVariant} to: ${listing.title}`);
+                            }
+                        }
+                    });
+
+                    if (Object.keys(updates).length > 0) {
+                        return database.ref().update(updates)
+                            .then(() => {
+                                showResult('variant-result', `✅ Successfully added variant data to ${updateCount} listings!`, 'success');
+                                console.log('✅ Updates completed:', updates);
+                            });
+                    } else {
+                        showResult('variant-result', 'ℹ️ No listings needed variant updates', 'info');
+                    }
+                })
+                .catch((error) => {
+                    showResult('variant-result', `❌ Error adding variants: ${error.message}`, 'error');
+                });
+        }
+
+        function testFiltering() {
+            showResult('filtering-result', 'Testing variant filtering logic...', 'info');
+
+            // Test cases for variant filtering
+            const testCases = [
+                {
+                    title: 'iPhone 16e',
+                    model: 'iPhone 16',
+                    variant: '16_16e',
+                    selectedVariants: ['16_16e'],
+                    expected: true
+                },
+                {
+                    title: 'iPhone 15 Plus',
+                    model: 'iPhone 15 PLUS',
+                    variant: '15_plus',
+                    selectedVariants: ['15_plus'],
+                    expected: true
+                },
+                {
+                    title: 'iPhone 14 Pro Max',
+                    model: 'iPhone 14',
+                    variant: '14_pro_max',
+                    selectedVariants: ['15_plus'],
+                    expected: false
+                },
+                {
+                    title: 'iPhone 16 Pro',
+                    model: 'iPhone 16',
+                    variant: null,
+                    selectedVariants: ['16_pro'],
+                    expected: false
+                }
+            ];
+
+            let results = [];
+            testCases.forEach(testCase => {
+                const isIphone = testCase.model && testCase.model.toLowerCase().includes('iphone');
+                const variant = testCase.variant || '';
+
+                // Only filter by variant if it's an iPhone and has variant data
+                let passes = true;
+                if (!isIphone || !variant) {
+                    passes = true; // Non-iPhones or iPhones without variant data pass through
+                } else {
+                    // Check if this iPhone variant matches any selected variant
+                    passes = testCase.selectedVariants.some(selectedVariant => {
+                        const match = variant === selectedVariant;
+                        return match;
+                    });
+                }
+
+                const correct = passes === testCase.expected;
+                results.push({
+                    title: testCase.title,
+                    variant: variant,
+                    selected: testCase.selectedVariants,
+                    expected: testCase.expected,
+                    actual: passes,
+                    correct: correct
+                });
+            });
+
+            const html = `
+                <h4>Filtering Test Results:</h4>
+                ${results.map(result => `
+                    <div style="margin: 10px 0; padding: 10px; background: ${result.correct ? '#e8f5e8' : '#ffebee'}; border-radius: 4px;">
+                        <strong>${result.title}</strong><br>
+                        Variant: ${result.variant || 'None'}<br>
+                        Selected: ${result.selected.join(', ')}<br>
+                        Expected: ${result.expected ? 'Show' : 'Hide'}<br>
+                        Actual: ${result.actual ? 'Show' : 'Hide'}<br>
+                        Result: ${result.correct ? '✅ Correct' : '❌ Wrong'}
+                    </div>
+                `).join('')}
+            `;
+
+            document.getElementById('filtering-result').innerHTML = html;
+        }
+    </script>
+</body>
+</html>

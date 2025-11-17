@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Variant Detection Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-case {
+            background: white;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .title {
+            font-weight: bold;
+            color: #333;
+        }
+        .variant {
+            color: #1877f2;
+            font-weight: bold;
+        }
+        .no-variant {
+            color: #999;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <h1>iPhone Variant Detection Test</h1>
+
+    <div id="test-results"></div>
+
+    <script>
+        // Copy the variant detection function from the app
+        function detectiPhoneVariant(title) {
+            if (!title) return null;
+
+            const lowerTitle = title.toLowerCase();
+
+            // iPhone 17 variants
+            if (lowerTitle.includes('iphone 17')) {
+                if (lowerTitle.includes('pro max') || lowerTitle.includes('17 pro max')) return '17_pro_max';
+                if (lowerTitle.includes('pro') || lowerTitle.includes('17 pro')) return '17_pro';
+                if (lowerTitle.includes('air') || lowerTitle.includes('17 air')) return '17_air';
+            }
+
+            // iPhone 16 variants
+            if (lowerTitle.includes('iphone 16')) {
+                if (lowerTitle.includes('pro max') || lowerTitle.includes('16 pro max')) return '16_pro_max';
+                if (lowerTitle.includes('pro') || lowerTitle.includes('16 pro')) return '16_pro';
+                if (lowerTitle.includes('plus') || lowerTitle.includes('16 plus')) return '16_plus';
+                if (lowerTitle.includes('16e') || lowerTitle.includes('16 e')) return '16_16e';
+            }
+
+            // iPhone 15 variants
+            if (lowerTitle.includes('iphone 15')) {
+                if (lowerTitle.includes('pro max') || lowerTitle.includes('15 pro max')) return '15_pro_max';
+                if (lowerTitle.includes('pro') || lowerTitle.includes('15 pro')) return '15_pro';
+                if (lowerTitle.includes('plus') || lowerTitle.includes('15 plus')) return '15_plus';
+            }
+
+            // iPhone 14 variants
+            if (lowerTitle.includes('iphone 14')) {
+                if (lowerTitle.includes('pro max') || lowerTitle.includes('14 pro max')) return '14_pro_max';
+                if (lowerTitle.includes('pro') || lowerTitle.includes('14 pro')) return '14_pro';
+                if (lowerTitle.includes('plus') || lowerTitle.includes('14 plus')) return '14_plus';
+            }
+
+            return null;
+        }
+
+        // Test cases
+        const testTitles = [
+            'iPhone 16 Pro Max - Excellent condition',
+            'iPhone 15 Pro 256GB Blue',
+            'iPhone 14 Plus 128GB',
+            'iPhone 16e 128GB White',
+            'iPhone 17 Air 256GB',
+            'iPhone 13 Pro Max',
+            'Samsung Galaxy S23',
+            'iPhone 16 Pro Max Space Black',
+            'Apple iPhone 15 Plus Red',
+            'iPhone 14 Pro Deep Purple',
+            'iPhone 16 Pro Natural Titanium',
+            'iPhone 17 Pro Max',
+            'iPhone 15 Pro Max 512GB'
+        ];
+
+        const resultsDiv = document.getElementById('test-results');
+
+        testTitles.forEach(title => {
+            const variant = detectiPhoneVariant(title);
+
+            const testCase = document.createElement('div');
+            testCase.className = 'test-case';
+
+            testCase.innerHTML = `
+                <div class="title">"${title}"</div>
+                <div>
+                    Variant:
+                    ${variant ?
+                        `<span class="variant">${variant}</span>` :
+                        `<span class="no-variant">No variant detected</span>`
+                    }
+                </div>
+            `;
+
+            resultsDiv.appendChild(testCase);
+        });
+    </script>
+</body>
+</html>
